@@ -53,8 +53,146 @@ export default function CertificationsPage() {
     loadProfile(uid);
   }, [loadProfile]);
 
+  // Tracks cursor coordinates over cards to calculate real-time glossy lighting reflections
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const card = e.currentTarget;
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left; 
+    const y = e.clientY - rect.top;  
+    
+    card.style.setProperty("--mouse-x", `${x}px`);
+    card.style.setProperty("--mouse-y", `${y}px`);
+  };
+
   return (
     <AppShell currentTab="mycertifications">
+      {/* Scoped CSS styling for transparent, highly polished badge card components */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        .badge-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+          gap: 18px;
+          padding: 4px 0 24px 0;
+        }
+        .badge-card {
+          --mouse-x: 0px;
+          --mouse-y: 0px;
+          background: rgba(13, 16, 23, 0.45);
+          border: 1px solid #191f2e;
+          border-radius: 14px;
+          padding: 26px 16px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+          position: relative;
+          overflow: hidden;
+          transition: border-color 0.4s, transform 0.4s, background-color 0.4s, box-shadow 0.4s;
+        }
+        
+        /* Cursor dynamic tracking radial glow spotlight layer */
+        .badge-card:not(.is-locked)::before {
+          content: '';
+          position: absolute;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background: radial-gradient(
+            300px circle at var(--mouse-x) var(--mouse-y),
+            rgba(255, 255, 255, 0.08),
+            transparent 65%
+          );
+          z-index: 1;
+          pointer-events: none;
+          opacity: 0;
+          transition: opacity 0.3s;
+        }
+        .badge-card:not(.is-locked):hover::before {
+          opacity: 1;
+        }
+        .badge-card:not(.is-locked):hover {
+          transform: translateY(-4px);
+          border-color: rgba(167, 139, 250, 0.3);
+          background: rgba(19, 24, 36, 0.8);
+          box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.6), 
+                      0 0 20px -2px rgba(167, 139, 250, 0.05);
+        }
+        .badge-card:not(.is-locked):hover .badge-naked-icon {
+          transform: scale(1.06);
+        }
+        .badge-card.is-locked {
+          opacity: 0.25;
+          cursor: not-allowed;
+        }
+        
+        /* Transparent framing wrapper for standalone emblems */
+        .badge-icon-frame {
+          width: 84px;
+          height: 84px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 16px;
+          background: none !important;
+          border: none !important;
+          box-shadow: none !important;
+          position: relative;
+          z-index: 2;
+        }
+        .badge-naked-icon {
+          font-size: 54px;
+          line-height: 1;
+          user-select: none;
+          transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.2), filter 0.4s;
+        }
+
+        /* State 1: Locked or Not Attempted (Subdued silver metallic sheen mask) */
+        .badge-card.is-subdued-icon .badge-naked-icon {
+          filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.45)) grayscale(0.2) brightness(0.9);
+          background: linear-gradient(135deg, #ffffff 30%, #94a3b8 60%, #ffffff 85%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+
+        /* State 2: Passed (Unmasked - Vivid full original color visibility with crisp backing drop shadow) */
+        .badge-card.is-passed-icon .badge-naked-icon {
+          filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.55)) brightness(1.05);
+          background: none;
+          -webkit-background-clip: initial;
+          -webkit-text-fill-color: initial;
+        }
+        .badge-card.is-passed-icon:hover .badge-naked-icon {
+          filter: drop-shadow(0 8px 16px rgba(167, 139, 250, 0.25)) brightness(1.1);
+        }
+
+        .badge-card-content {
+          position: relative;
+          z-index: 2;
+          width: 100%;
+        }
+        .badge-status-pill {
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.05em;
+          text-transform: uppercase;
+          padding: 4px 12px;
+          border-radius: 20px;
+          margin-top: 14px;
+          display: inline-block;
+          background: rgba(255, 255, 255, 0.04);
+          color: #566275;
+          border: 1px solid rgba(255, 255, 255, 0.02);
+        }
+        .status-passed {
+          background: rgba(16, 185, 129, 0.08);
+          color: #10b981;
+          border-color: rgba(16, 185, 129, 0.2);
+        }
+        .status-locked {
+          background: rgba(239, 68, 68, 0.04);
+          color: #ef4444;
+          border-color: rgba(239, 68, 68, 0.1);
+        }
+      `}} />
+
       <div className="ph">
         <h2>My Certifications</h2>
 
@@ -97,149 +235,81 @@ export default function CertificationsPage() {
           <p>Could not load your profile. Please try again later.</p>
         </div>
       ) : certGroups.length > 0 ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
           {certGroups.map((group) => (
-            <div
-              key={group.id}
-              className="cert-panel"
-              style={{
-                background: "var(--surface, #11141a)",
-                borderRadius: "8px",
-                border: "1px solid var(--border, #1e2330)",
-                overflow: "hidden",
-              }}
-            >
+            <div key={group.id}>
+              {/* Product Group Section Headers */}
               <div
-                className="cert-panel-header"
                 style={{
-                  padding: "16px 20px",
-                  borderBottom: "1px solid var(--border, #1e2330)",
                   display: "flex",
                   alignItems: "center",
                   gap: "8px",
                   fontWeight: 600,
-                  color: "#fff",
+                  fontSize: "12px",
+                  color: "#6b7280",
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                  paddingBottom: "8px",
+                  borderBottom: "1px solid var(--border, #1e2330)",
+                  marginBottom: "14px"
                 }}
               >
                 <span>{group.icon}</span>
                 <span>{group.title}</span>
               </div>
 
-              <div style={{ overflowX: "auto" }}>
-                <table
-                  style={{
-                    width: "100%",
-                    borderCollapse: "collapse",
-                    textAlign: "left",
-                    fontSize: "14px",
-                  }}
-                >
-                  <thead>
-                    <tr
-                      style={{
-                        borderBottom: "1px solid var(--border, #1e2330)",
-                        color: "var(--text-muted, #566275)",
-                        textTransform: "uppercase",
-                        fontSize: "11px",
-                        letterSpacing: "0.05em",
-                      }}
+              {/* Flexible Compact Badge Grid */}
+              <div className="badge-grid">
+                {group.certifications.map((cert) => {
+                  const isLocked = cert.status?.toLowerCase() === "locked";
+                  const isPassed = cert.status?.toLowerCase() === "passed";
+                  
+                  return (
+                    <div 
+                      key={`${group.id}-${cert.name}`} 
+                      className={`badge-card ${isLocked ? 'is-locked' : ''} ${isPassed ? 'is-passed-icon' : 'is-subdued-icon'}`}
+                      onMouseMove={isLocked ? undefined : handleMouseMove}
                     >
-                      <th style={{ padding: "12px 20px" }}>Certification</th>
-                      <th style={{ padding: "12px 20px" }}>Best Score</th>
-                      <th style={{ padding: "12px 20px" }}>Attempts</th>
-                      <th style={{ padding: "12px 20px" }}>Status</th>
-                      <th style={{ padding: "12px 20px" }}>Last Attempt</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {group.certifications.map((cert) => {
-                      const isLocked = cert.status?.toLowerCase() === "locked";
-                      
-                      return (
-                        <tr
-                          key={`${group.id}-${cert.name}`}
-                          style={{
-                            borderBottom: "1px solid var(--border, #1e2330)",
-                            opacity: isLocked ? 0.6 : 1, // Subtle opacity fade for locked certifications
-                          }}
-                        >
-                          <td style={{ padding: "16px 20px" }}>
-                            <div
-                              style={{
-                                display: "flex",
-                                flexDirection: "column",
-                                gap: "2px",
-                              }}
-                            >
-                              <span style={{ fontWeight: 600, color: isLocked ? "var(--text-muted, #566275)" : "#fff" }}>
-                                {cert.name}
-                              </span>
-                              {cert.subtext ? (
-                                <span
-                                  style={{
-                                    fontSize: "12px",
-                                    color: "var(--text-muted, #566275)",
-                                  }}
-                                >
-                                  {cert.subtext}
-                                </span>
-                              ) : null}
-                            </div>
-                          </td>
-                          <td
-                            style={{
-                              padding: "16px 20px",
-                              color:
-                                cert.bestScore === "—" || isLocked
-                                  ? "var(--text-muted, #566275)"
-                                  : "#fff",
-                            }}
-                          >
+                      {/* Naked Icon Frame */}
+                      <div className="badge-icon-frame">
+                        <span className="badge-naked-icon">
+                          {cert.name.includes("PathFinder") ? "🧭" : cert.name.includes("Navigator") ? "🗺️" : "🏆"}
+                        </span>
+                      </div>
+
+                      <div className="badge-card-content">
+                        {/* Headers */}
+                        <h3 style={{ fontSize: "16px", fontWeight: 600, color: "#fff", margin: "0 0 2px 0", letterSpacing: "0.01em" }}>
+                          {cert.name}
+                        </h3>
+                        {cert.subtext ? (
+                          <p style={{ fontSize: "11px", color: "var(--text-muted, #566275)", margin: "0 0 12px 0", lineHeight: "1.35" }}>
+                            {cert.subtext}
+                          </p>
+                        ) : null}
+
+                        {/* Best Score Metric Block */}
+                        <div style={{ margin: "6px 0" }}>
+                          <span style={{ fontSize: "9px", color: "var(--text-muted, #566275)", display: "block", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                            Best Score
+                          </span>
+                          <span style={{ fontSize: "22px", fontWeight: 700, color: isLocked || cert.bestScore === "—" ? "var(--text-muted, #566275)" : "#fff" }}>
                             {isLocked ? "—" : cert.bestScore}
-                          </td>
-                          <td
-                            style={{
-                              padding: "16px 20px",
-                              color:
-                                cert.attempts === 0 || isLocked
-                                  ? "var(--text-muted, #566275)"
-                                  : "#fff",
-                            }}
-                          >
-                            {isLocked ? 0 : cert.attempts}
-                          </td>
-                          <td style={{ padding: "16px 20px" }}>
-                            {isLocked ? (
-                              <span
-                                style={{
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: "4px",
-                                  color: "#ef4444", // Crimson/Red text color for locked states
-                                  fontWeight: 500,
-                                }}
-                              >
-                                🔒 Locked
-                              </span>
-                            ) : (
-                              <span style={{ color: "var(--text-muted, #566275)" }}>
-                                {cert.status}
-                              </span>
-                            )}
-                          </td>
-                          <td
-                            style={{
-                              padding: "16px 20px",
-                              color: "var(--text-muted, #566275)",
-                            }}
-                          >
-                            {isLocked ? "—" : cert.lastAttempt}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                          </span>
+                        </div>
+
+                        {/* Custom Contextual Status Pills */}
+                        {isLocked ? (
+                          <div className="badge-status-pill status-locked">🔒 Locked</div>
+                        ) : isPassed ? (
+                          <div className="badge-status-pill status-passed">Passed</div>
+                        ) : (
+                          <div className="badge-status-pill">{cert.status || "Not Attempted"}</div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           ))}

@@ -12,6 +12,7 @@ type SyllabusPageProps = {
 };
 
 function getDone() {
+  if (typeof window === "undefined") return {};
   const stored = window.localStorage.getItem("ace2_done");
   return stored ? (JSON.parse(stored) as DoneRecord) : {};
 }
@@ -34,6 +35,9 @@ export default function SyllabusPage({ user }: SyllabusPageProps) {
   const [selectedLevel, setSelectedLevel] = useState<CertId>(certs[0]);
   const [doneState, setDoneState] = useState<DoneRecord>(() => getDone());
   const [openCards, setOpenCards] = useState<Record<string, boolean>>({});
+  
+  // Track loading state per module key to prevent duplicate API requests
+  const [syncingKeys, setSyncingKeys] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!certs.includes(selectedLevel)) {
@@ -42,12 +46,18 @@ export default function SyllabusPage({ user }: SyllabusPageProps) {
   }, [certs, selectedLevel]);
 
   async function markDone(key: string) {
+    if (syncingKeys[key]) return;
+
+    // 1. Optimistically update local state & localStorage
     const next = { ...doneState };
     if (!next[user.id]) next[user.id] = {};
     next[user.id][key] = new Date().toISOString();
+    
     setDoneState(next);
     saveDone(next);
+    setSyncingKeys((prev) => ({ ...prev, [key]: true }));
 
+    // 2. Sync to backend database
     try {
       const response = await fetch("/api/firebase/user-progress", {
         method: "POST",
@@ -65,6 +75,8 @@ export default function SyllabusPage({ user }: SyllabusPageProps) {
       }
     } catch (error) {
       console.warn("Failed to sync progress to Firestore.", error);
+    } finally {
+      setSyncingKeys((prev) => ({ ...prev, [key]: false }));
     }
   }
 
@@ -78,6 +90,7 @@ export default function SyllabusPage({ user }: SyllabusPageProps) {
         </p>
       </div>
 
+      {/* Product Tabs */}
       <div className="ptabs">
         {CURRICULUM.map((product) => (
           <button
@@ -91,6 +104,7 @@ export default function SyllabusPage({ user }: SyllabusPageProps) {
         ))}
       </div>
 
+      {/* Certification Level Tabs */}
       <div className="ltabs">
         {certs.map((certId) => (
           <button
@@ -104,6 +118,7 @@ export default function SyllabusPage({ user }: SyllabusPageProps) {
         ))}
       </div>
 
+      {/* Syllabus Sections & Modules */}
       {selectedProduct.sections.map((section) => (
         <div key={section.title}>
           <div className="sec-label">◆ {section.title}</div>
@@ -112,6 +127,8 @@ export default function SyllabusPage({ user }: SyllabusPageProps) {
               const key = `${selectedProduct.id}-${module.code}-${selectedLevel}`;
               const isDone = Boolean(doneState[user.id]?.[key]);
               const isOpen = Boolean(openCards[key]);
+              const isSyncing = Boolean(syncingKeys[key]);
+
               return (
                 <article className={`mod-card ${isDone ? "mod-done" : ""}`} key={key}>
                   <button
@@ -121,7 +138,7 @@ export default function SyllabusPage({ user }: SyllabusPageProps) {
                   >
                     <span className="mod-code">{module.code}</span>
                     <span className="mod-title">{module.title}</span>
-                    {isDone ? <span className="done-tag">✓ Done</span> : null}
+                    {/* {isDone ? <span className="done-tag">✓ Done</span> : null} */}
                     <span className="mod-chev">{isOpen ? "▲" : "▼"}</span>
                   </button>
                   {isOpen ? (
@@ -130,6 +147,7 @@ export default function SyllabusPage({ user }: SyllabusPageProps) {
                         {module.content[selectedLevel] ??
                           "Content will be available once documentation is complete."}
                       </div>
+                      
                       <div className="mod-links">
                         {module.docLink ? (
                           <a
@@ -156,13 +174,15 @@ export default function SyllabusPage({ user }: SyllabusPageProps) {
                             Documentation links will be added by admin
                           </span>
                         ) : null}
+
+                        {/* Mark As Done Button */}
                         <button
-                          className={`btn-done ${isDone ? "done-state" : ""}`}
-                          disabled={isDone}
+                          className={`btn-done ${isDone ? "done-state" : "active-state"}`}
+                          disabled={isDone || isSyncing}
                           onClick={() => markDone(key)}
                           type="button"
                         >
-                          {isDone ? "✓ Completed" : "Mark as Done"}
+                          {isSyncing ? "Saving..." : isDone ? "✓ Completed" : "Mark as Done"}
                         </button>
                       </div>
                     </div>

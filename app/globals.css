@@ -993,3 +993,111 @@ input, textarea, select {
 .btn-cancel:hover { background: var(--surface2); }
 .btn-save-modal { padding: 9px 22px; background: var(--purple); border: none; border-radius: var(--r); color: white; font-size: 13px; font-weight: 700; }
 .btn-save-modal:hover { opacity: .88; }
+/* --- Global Learning Dropdown Wrapper --- */
+.submenu-container {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 0 8px 12px; /* Indents the sub-items slightly right */
+  margin-left: 12px;
+  border-left: 1px solid rgba(255, 255, 255, 0.06); /* Subtle vertical tracking line */
+}
+
+/* --- Submenu Individual Item --- */
+.sub-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* Base state: Clean, readable, muted title */
+.sub-nav .sub-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: #94a3b8; /* Soft slate gray instead of harsh orange */
+}
+
+/* Sub-description text */
+.sub-nav .sub-desc {
+  font-size: 11px;
+  color: #475569; /* Muted subtitle */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --- Hover State --- */
+.sub-nav:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+.sub-nav:hover .sub-title {
+  color: #f1f5f9; /* Brightens up beautifully on hover */
+}
+
+/* --- Active/Selected State --- */
+/* Use this class for the sub-item that is currently active */
+.sub-nav.active {
+  background: rgba(255, 107, 0, 0.1); /* Super soft tint of your brand Orange */
+}
+.sub-nav.active .sub-title {
+  color: #ff6b00; /* Crisp brand orange highlight *only* on the active item */
+  font-weight: 600;
+}
+.sub-nav.active .sub-desc {
+  color: rgba(255, 107, 0, 0.6);
+}
+z/* Container alignment */
+.mod-links {
+  display: flex;
+  justify-content: space-between; /* Pushes links to the left, done button to the right */
+  align-items: center;
+  margin-top: 16px;
+  width: 100%;
+}
+
+.left-links {
+  display: flex;
+  gap: 12px; /* Spaces out your Confluence and Video buttons */
+  align-items: center;
+}
+
+/* Base button styling matching the image */
+.btn-done {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 18px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 50px; /* Gives it the exact pill shape */
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  background-color: rgba(9, 44, 34, 0.4); /* Translucent dark teal background */
+  text-decoration: none;
+}
+
+/* "Mark as Done" State (Uncompleted) */
+.btn-done.active-state {
+  border: 1px solid #10b981; /* Glowing emerald/green border */
+  color: #10b981; /* Matching green text */
+}
+
+.btn-done.active-state:hover {
+  background-color: rgba(16, 185, 129, 0.15); /* Soft background glow on hover */
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
+}
+
+/* "✓ Completed" State */
+.btn-done.done-state {
+  border: 1px solid #065f46; /* Slightly deeper green border */
+  color: #34d399; /* Bright mint text */
+  background-color: rgba(6, 95, 70, 0.3); /* Filled background */
+  cursor: not-allowed; /* Visually denotes it's completed and disabled */
+}
+
+/* Adjustments for the loading state */
+.btn-done:disabled {
+  opacity: 0.8;
+}

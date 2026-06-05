@@ -72,6 +72,7 @@ export default function PasswordField({
         <button
           type="button"
           className="pwd-toggle"
+          style={{ paddingTop: '26px' }} 
           onClick={() => setShowPassword((visible) => !visible)}
           aria-label={showPassword ? "Hide password" : "Show password"}
         >

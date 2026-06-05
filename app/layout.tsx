@@ -14,7 +14,10 @@ const jetBrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: "ACE Academy · GreyOrange",
-  description: "ACE Academy migration to Next.js",
+  description: "ACE Academy",
+  icons: {
+    icon: '/favicon.png'
+  },
 };
 
 export default function RootLayout({
