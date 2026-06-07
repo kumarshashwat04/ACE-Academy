@@ -112,6 +112,7 @@ input,textarea,select{font-family:'Plus Jakarta Sans',sans-serif}
   color:var(--purple-l);font-size:12px;font-weight:700;text-decoration:none
 }
 .login-footnote a:hover{text-decoration:underline} */
+
 #loginScreen{
   min-height:100vh;width:100vw;display:flex;align-items:center;justify-content:center;
   background:#080B12;position:relative;overflow:hidden;z-index:3
@@ -872,21 +873,57 @@ input,textarea,select{font-family:'Plus Jakarta Sans',sans-serif}
 .sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
 .sec-h2{font-size:13px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--text2)}
 
-.pwd-field-wrap{position:relative;display:flex;align-items:center}
-.pwd-field-wrap input{width:100%;padding-right:44px}
-.pwd-eye-btn{
-  position:absolute;right:13px;
-  background:none;border:none;padding:5px;
-  color:rgba(255,255,255,0.25);cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  border-radius:7px;outline:none;
-  transition:color 0.2s ease,transform 0.2s var(--ease),background 0.2s ease
+/* 1. Establish the positioning context for the password area */
+.pwd-field-wrap {
+  position: relative;
+  width: 100%;
 }
-.pwd-eye-btn:hover{color:var(--purple-l);transform:scale(1.18);background:rgba(109,82,232,0.1)}
-.pwd-eye-btn:active{transform:scale(0.88)}
 
-.eye-svg{width:16px;height:16px;transition:opacity 0.15s ease}
-.eye-svg.spin{animation:eyeSpin 0.38s var(--ease) both}
+/* Ensure text doesn't bleed into the eye icon */
+.pwd-field-wrap input {
+  padding-right: 48px !important; 
+}
+
+/* 2. Style and anchor the eye button inside the input */
+.pwd-eye-btn {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  outline: none;
+}
+
+/* 3. Size and color the SVG icon to match your theme */
+.eye-icon {
+  width: 18px;
+  height: 18px;
+  color: rgba(255, 255, 255, 0.35);
+  transition: color 0.25s ease, transform 0.25s ease;
+}
+
+/* Subtle interactive states for the button */
+.pwd-eye-btn:hover .eye-icon {
+  color: var(--purple-l, #C4B5FD); /* Falls back to your title light purple if var isn't loaded */
+  transform: scale(1.05);
+}
+
+.pwd-eye-btn:active .eye-icon {
+  transform: scale(0.95);
+}
+
+/* 4. The missing utility rule to hide the inactive eye state */
+.hidden {
+  display: none !important;
+}
 @keyframes eyeSpin{
   0%{opacity:0;transform:scale(0.4) rotate(-25deg)}
   60%{transform:scale(1.15) rotate(5deg)}
@@ -1253,9 +1290,10 @@ input,textarea,select{font-family:'Plus Jakarta Sans',sans-serif}
       <div class="nav" id="n-syllabus"><span class="nav-ico">◈</span><a href="/syllabus" target="_top">Syllabus</a></div>
       <div class="nav" id="n-assessment"><span class="nav-ico">✎</span><a href="/assessment" target="_top">Assessment</a></div>
       <div class="nav" id="n-certifications"><span class="nav-ico">◎</span><a href="/certifications" target="_top">My Certifications</a></div>
+      <div class="nav" id="n-globalCourse"><span class="nav-ico">◎</span><a href="/globalCourse" target="_top">Global Courses</a></div>
       <div class="sid-label" id="adminSec" style="display:none">Admin</div>
-      <div class="nav" onclick="goPage('admin')" id="n-admin" style="display:none"><span class="nav-ico">⚙</span>Manage Program</div>
-      <div class="nav" onclick="goPage('scores')" id="n-scores" style="display:none"><span class="nav-ico">≡</span>All Scores</div>
+      <div class="nav" id="n-admin" style="display:none"><span class="nav-ico">⚙</span><a href="/manageprogram" target="_top">Manage Program</a></div>
+      <div class="nav" id="n-scores" style="display:none"><span class="nav-ico">≡</span><a href="/scores" target="_top">All Scores</a></div>
     </div>
 
     <div class="main" id="main">
@@ -1645,308 +1683,14 @@ function toggleLoginPwd(){
   show.classList.add('spin');
 }
 
-const PRODUCTS=[
-  {id:'rtp',name:'Ranger RTP',sub:'Rack to Person',icon:'🤖',certs:['pathfinder','navigator','grandmaster'],
-   sections:[
-    {title:'Platform & Infrastructure',mods:[
-      {code:'1.1.1',title:'Basic Architecture',
-       content:{
-         pathfinder:'Architecture of Platform Services, Butler Server, and Integration Layer.',
-         navigator:'System logic and flow charts for each server; System Architecture Diagram.',
-         grandmaster:'High-level data flow between all modules.'
-       },
-       docLink:'https://greyorange-work.atlassian.net/wiki/spaces/BS/pages/62673505/Butler+Server+Architecture',
-       videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/basic-architecture-overview',
-       videoTitle:'Architecture Overview Walkthrough'
-      },
-      {code:'1.1.2',title:'Database & Services',
-       content:{
-         pathfinder:'Platform Server Databases and Services; Butler Server Application Database and Services; Influx Database.',
-         navigator:'System Logic between Platform Services and Databases; System Logic between Butler Server Application Services and Mnesia Database; Mnesia Commands; System Logic of conversion happening on Integration Layer; System Logic between microservices (Platform ThreadPools &amp; Butler Server gensaga) and Kafka Understanding.',
-         grandmaster:'Commands used for Platform Databases (Postgres), Platform service (restart/status); Database management for Platform and Butler server — Postgres, Mnesia; Commands used for Butler Server application (status/restart); Sanity check of Butler Server application (gmbootup / data sanity); Integration Layer inbuilt in wms_process WAR file; Data flow and Troubleshooting between Platform microservice via Java Thread; Data flow and Troubleshooting between Platform and Butler application via Kafka; Data flow and Troubleshooting between Butler modules via gensaga.'
-       },
-       docLink:'https://greyorange-work.atlassian.net/wiki/spaces/BS/pages/129433836/Butler+Server+Mnesia+Database+Schema+Documentation',
-       videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/database-services',
-       videoTitle:'Database & Services Deep Dive'
-      },
-      {code:'1.1.3',title:'Cloud / On-Prem',
-       content:{
-         pathfinder:'Basic Architecture of Cloud Sites (Kubernetes and POD) vs On-Prem sites having Tomcat service.',
-         navigator:'How Tomcat service is broken into different Microservices in POD; List all available PODs and define their use case along with the system logic; Define database changes involved in Cloud site for Butler Server application.',
-         grandmaster:'XMX and XMN Value for any Pod and microservice; Scale up and Auto-restart functionality of POD; Commands used for Platform DB and login to any Cloud Site; ping/copy/scp from any Cloud site to local setup; Common commands for scale up/down of any POD; Use of jump server and other Kubernetes-related commands.'
-       },
-       docLink:'https://greyorange-work.atlassian.net/wiki/spaces/SRE/pages/113774130/HOW+TO+LOGIN+ON+ON+PREM+SERVERS',
-       videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/cloud-onprem',
-       videoTitle:'Cloud vs On-Prem Deployment Guide'
-      },
-      {code:'1.1.4',title:'Safety Controllers',
-       content:{
-         pathfinder:'Types of Safety Devices in GreyMatter — Light Curtain, System Pause, Zone Pause, Fire Emergency; When and why they are useful for operation.',
-         navigator:'System logic and how to apply System Emergency; How to remove System Emergency (UI Flow); Flow chart for components involved in System Emergencies; Mute &amp; unmute light curtains functionality; Light Curtain functionality &amp; Flow Diagram.',
-         grandmaster:'Table structure for Zone controllers, and data flow with respect to System Pause, Zone Pause, Fire Emergency; Data flow between servers in different Emergency scenarios; How to check system emergency from backend; How to apply/remove emergency from backend; Troubleshoot any discrepancy in Zone controller; Disable and resume the system due to a faulty Controller; How to Troubleshoot Light Curtain.'
-       },
-       docLink:'https://greyorange-work.atlassian.net/wiki/spaces/AKB/pages/137101316',
-       videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/safety-controllers',
-       videoTitle:'Safety Controllers Complete Guide'
-      },
-      {code:'1.1.5',title:'Tower Application',
-       content:{
-         pathfinder:'What the Tower application does — orchestrates robots; Tower Application Capabilities and Commonly Used Features.',
-         navigator:'How Tower Application is able to orchestrate RTM; RabbitMQ Introduction and Architecture; How to use Tower Capabilities.',
-         grandmaster:'RabbitMQ Queue Monitoring; Tower Tool Logs Monitoring; Tower Tool APIs — Understanding and Troubleshooting for various Capabilities.'
-       },
-       docLink:'https://greyorange-work.atlassian.net/wiki/spaces/AKB/pages/tower-application',
-       videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/tower-app',
-       videoTitle:'Tower Application Walkthrough'
-      },
-      {code:'1.1.6',title:'Manager Dashboard',
-       content:{
-         pathfinder:'Understanding Different Tabs of Manager Dashboard and its capabilities.',
-         navigator:'Understanding the Manager Dashboard Architecture — Elastic DB and ElasticSearch API integration with Platform and other services.',
-         grandmaster:'Elastic DB and Elastic API Monitoring; ElasticSearch service sync job and Manual Sync Job; Delete a Record from Elastic DB; Fetch specific date record from Elastic DB; Manager Dashboard logs and API Troubleshooting.'
-       },
-       docLink:'https://greyorange-work.atlassian.net/wiki/spaces/GEM/pages/manager-dashboard',
-       videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/manager-dashboard',
-       videoTitle:'Manager Dashboard Deep Dive'
-      }
-    ]},
-    {title:'Pick Flows',mods:[
-      {code:'1.2.1',title:'Vanilla Pick',
-       content:{
-         pathfinder:'Standard Pick to Bin flow and explanation of the components associated with it; High-level Flow Diagram involving various components within Butler Server Application and Platform Services.',
-         navigator:'Step-by-step UI at Pick Station; Logic for rack selection; Double-click on Flow Diagram — explain various microservices involved in Vanilla Pick Flow (all microservices in Platform and Butler Server application); Different statuses of Orders, Bin statuses, Task status, Platform Service Request statuses shown in Manager Dashboard; Order Assignment Logic; Pick Scheduler Weight Concept and Order Manager Cycle.',
-         grandmaster:'Whole flow of backend starting with Platform Service Request → Execution → Notification → Butler Server (IMS) → GMC → PF → IMS → Platform Notification to customer; Explain all involved table statuses and data flow from End to End; Required flag and field values within tables to be true for Order Assignment; Mandatory things to check for Order Assignment with commands; Checklist for checking one correct flow — Troubleshooting if anything found broken.'
-       },
-       docLink:'https://greyorange-work.atlassian.net/wiki/spaces/BS/pages/130187898/RTP+Task+Manager+Flow',
-       videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/vanilla-pick',
-       videoTitle:'Vanilla Pick Flow End-to-End'
-      },
-      {code:'1.2.2',title:'MTU Flow',
-       content:{
-         pathfinder:'What MTU flow is solving for the customer; System Architecture Overview for MTU flow; Involved Microservices and Components.',
-         navigator:'End-to-End Flow Diagram; UI Flow for Extraction and Induction; Complete MTU Lifecycle — Stage by Stage Platform Side; Complete MTU Lifecycle — Stage by Stage Butler Server Application Side.',
-         grandmaster:'Complete MTU Lifecycle — Stage by Stage with commands and Table structure explaining Data flow — Platform Side; Complete MTU Lifecycle — Stage by Stage with commands and Table structure explaining Data flow — Butler Server Application Side; Checklist for checking one Happy Flow; Troubleshooting if anything found broken.'
-       },
-       docLink:'https://greyorange-work.atlassian.net/wiki/spaces/BS/pages/mtu-flow',
-       videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/mtu-flow',
-       videoTitle:'MTU Flow Lifecycle Explained'
-      },
-      {code:'1.2.3',title:'Rollcage Pick Flow',
-       content:{
-         pathfinder:'What Rollcage flow is solving for the customer; System Architecture Overview for Rollcage flow; Involved Microservices and Components.',
-         navigator:'End-to-End Flow Diagram; UI Flow for Rollcage Docking and Undocking for Pick; Explain architecture for Dockstation and its various statuses; Architecture for Resource (Rollcage / Rollcage Bin / Totes) &amp; Barcode table structure and different statuses like In Use and Ready for Re-use; Complete Rollcage Lifecycle — Stage by Stage Platform Side; Complete Rollcage Lifecycle — Stage by Stage Butler Server Application Side.',
-         grandmaster:'Complete Rollcage Lifecycle in Pick — Stage by Stage with commands and Table structure explaining Data flow — Platform Side; Complete Rollcage Lifecycle in Pick — Stage by Stage with commands and Table structure explaining Data flow — Butler Server Application Side; Checklist for checking one Happy Flow; Troubleshooting if anything found broken (e.g. rollcage is not getting undocked after order completion — how to undock a rollcage, etc.).'
-       },
-       docLink:'https://greyorange-work.atlassian.net/wiki/spaces/BS/pages/129860486',
-       videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/rollcage-pick',
-       videoTitle:'Rollcage Pick & Docking Flow'
-      },
-      {code:'1.2.4',title:'Packing Box Flow',
-       content:{
-         pathfinder:'What Packing Box flow is solving for the customer; System Architecture Overview for Packing flow (packing box association); Involved Microservices and Components.',
-         navigator:'End-to-End Flow Diagram; UI Flow for Packing Box Association and Deassociation for Pick; Explain architecture for packing box association; Architecture for Resource in packing box association; Complete Packing Box Lifecycle — Stage by Stage Platform Side; Complete Packing Box Lifecycle — Stage by Stage Butler Server Application Side.',
-         grandmaster:'Complete Packing Box Lifecycle in Pick — Stage by Stage with commands and Table structure explaining Data flow — Platform Side; Complete Packing Box Lifecycle in Pick — Stage by Stage with commands and Table structure explaining Data flow — Butler Server Application Side; Checklist for checking one Happy Flow; Troubleshooting if anything found broken.'
-       },
-       docLink:'https://greyorange-work.atlassian.net/wiki/spaces/BS/pages/packing-box-flow',
-       videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/packing-box',
-       videoTitle:'Packing Box Association Flow'
-      },
-      {code:'1.2.5',title:'Tote Flow',
-       content:{
-         pathfinder:'What Tote flow is solving for the customer; System Architecture Overview for Tote flow (Tote association); Involved Microservices and Components.',
-         navigator:'End-to-End Flow Diagram; UI Flow for Tote Association and Deassociation for Pick; Explain architecture for Tote association; Architecture for Resource in Tote association with their status; Complete Tote Flow Lifecycle — Stage by Stage Platform Side; Complete Tote Flow Lifecycle — Stage by Stage Butler Server Application Side.',
-         grandmaster:'Complete Tote Flow Lifecycle in Pick — Stage by Stage with commands and Table structure explaining Data flow — Platform Side; Complete Tote Flow Lifecycle in Pick — Stage by Stage with commands and Table structure explaining Data flow — Butler Server Application Side; Checklist for checking one Happy Flow; Troubleshooting if anything found broken.'
-       },
-       docLink:'https://greyorange-work.atlassian.net/wiki/spaces/BS/pages/tote-flow',
-       videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/tote-flow',
-       videoTitle:'Tote Association & Lifecycle'
-      },
-      {code:'1.2.6',title:'Zero Walk Flow',
-       content:{
-         pathfinder:'What Zero Walk is for the customer; How RMS is integrated with RTP Flow; How this solution works on PPS; Key terminology differences between a standard RTP and Zero Walk flow.',
-         navigator:'End-to-End Flow Diagram; Explain architecture for Zero Walk Flow with flow diagram; New table/service — ZW Carrier, Auto Pick Transaction — introduction and use case in Zero Walk flow; End-to-End UI Flow for Picking in Zero Walk flow; Explain how RMS system and RTP system communicate with each other.',
-         grandmaster:'Services and databases involving Zero Walk Flow; End-to-End data flow in Zero Walk Flow; Troubleshooting Zero Walk Flow; Table structure explaining Data flow in Zero Walk Flow; Data flow between RMS and RTP System and its Troubleshooting.'
-       },
-       docLink:'https://greyorange-work.atlassian.net/wiki/spaces/BS/pages/zero-walk-flow',
-       videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/zero-walk',
-       videoTitle:'Zero Walk Flow Architecture'
-      },
-      {code:'1.2.7',title:'Shuttle Pick Flow',
-       content:{
-         pathfinder:'What Shuttle Pick flow solves — high-density storage, case-level picking; Difference from standard RTP; Shuttle bot role.',
-         navigator:'End-to-End UI flow for Shuttle Pick; Mission creation and assignment; Shuttle bin and tray statuses; Integration with Platform pick scheduler.',
-         grandmaster:'Shuttle-specific DB tables — shuttle_slot, shuttle_mission; Commands; Kibana log tracing for shuttle; Troubleshooting stuck shuttle missions.'
-       },
-       docLink:'https://greyorange-work.atlassian.net/wiki/spaces/BS/pages/shuttle-pick-flow',
-       videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/shuttle-pick',
-       videoTitle:'Shuttle Pick Flow Overview'
-      },
-      {code:'1.2.8',title:'Streaming Flow',
-       content:{
-         pathfinder:'What Streaming flow is — continuous pick without order batching; Business problem for high-throughput sites; Key config flags.',
-         navigator:'How orders flow continuously into pick queue; MRU/MSIO order interaction; UI at PPS during streaming mode.',
-         grandmaster:'Streaming-specific Butler configs; Mnesia table changes for streaming; Kafka topic monitoring; Troubleshooting order stalls in streaming mode.'
-       },
-       docLink:'https://greyorange-work.atlassian.net/wiki/spaces/BS/pages/streaming-flow',
-       videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/streaming-flow',
-       videoTitle:'Streaming Flow Configuration'
-      },
-      {code:'1.2.9',title:'Item Recall',
-       content:{
-         pathfinder:'What Item Recall solves — product defect/expiry pull-back; Difference from a regular pick order; Who triggers it.',
-         navigator:'UI flow to create and manage a recall order; Recall lifecycle statuses; Interaction with inventory — TPID/tag matching.',
-         grandmaster:'Recall service request JSON; Inventory table checks; Commands to diagnose and recover stuck recall orders.'
-       },
-       docLink:'https://greyorange-work.atlassian.net/wiki/spaces/BS/pages/item-recall-flow',
-       videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/item-recall',
-       videoTitle:'Item Recall Process Guide'
-      },
-      {code:'1.2.10',title:'Re-warehousing',
-       content:{
-         pathfinder:'What Re-warehousing solves — rack consolidation, slot optimisation; When triggered — manual vs automated.',
-         navigator:'UI flow to initiate re-warehousing; Source/destination rack selection logic; Lifecycle — pick-from-rack + put-back.',
-         grandmaster:'Re-warehouse task table structure; Platform + Butler commands; Inventory reconciliation; Troubleshooting.'
-       },
-       docLink:'https://greyorange-work.atlassian.net/wiki/spaces/BS/pages/rewarehousing-flow',
-       videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/rewarehousing',
-       videoTitle:'Re-warehousing Operations'
-      }
-    ]},
-    {title:'Put Flows',mods:[
-      {code:'1.3.1',title:'Vanilla Put (UDP)',content:{pathfinder:'Standard user-directed put-away flow; When used; Components involved.',navigator:'Step-by-step UI for UDP induction; Rack slot selection; Bin association; Put lifecycle statuses.',grandmaster:'<code>put_transaction</code> and <code>slot_state</code> tables; Mnesia state during put; Commands; Troubleshooting.'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/BS/pages/put-flows',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/vanilla-put',videoTitle:'Vanilla UDP Put Flow'},
-      {code:'1.3.2',title:'Rollcage Put',content:{pathfinder:'Rollcage put use-case — bulk inbound; Rollcage vs standard put; Dockstation role.',navigator:'Docking UI; Item expectation scanning; Rollcage put lifecycle (UD Rollcage flow); Resource JSON structure.',grandmaster:'Service request JSON for UD rollcage; Resource table statuses; Commands; Troubleshooting rollcage stuck in-use.'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/BS/pages/62666223/Service+Request+and+Resource+JSONS+for+PUT+Flows',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/rollcage-put',videoTitle:'Rollcage Put Flow'},
-      {code:'1.3.3',title:'UDP Put',content:{pathfinder:'User-directed put without staging — induction-first model; When to use UDP over SDP.',navigator:'UI for staging vs non-staging UD put; Empty tote induction sub-flow; Put-back-to-reserve interaction.',grandmaster:'Config flags (<code>ud_put_enabled</code>); Table state comparison UDP vs SDP; Commands; Exception recovery.'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/BS/pages/put-flows',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/udp-put',videoTitle:'UDP Put Deep Dive'},
-      {code:'1.3.4',title:'SDP Put',content:{pathfinder:'System-directed put-away — how system selects slot; Business benefit over UDP.',navigator:'SDP UI flow — scan item → stage → wait for tote → scan slot; SDP with/without item expectation; Warehouse-full handling.',grandmaster:'SDP put notification JSON (<code>put_complete</code>); Slot assignment config; Troubleshooting warehouse-full errors and SDP stalls.'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/BS/pages/62624766/Warehouse+Full+in+SD+Put+Flow',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/sdp-put',videoTitle:'SDP Put System-Directed Flow'},
-      {code:'1.3.5',title:'PPP Flow',content:{pathfinder:'What PPP solves — pallet-level induction via MPU; PPP app overview.',navigator:'PPP app workflow: Login → Scan PPP Point Barcode → Remove Empty Pallet → Scan LPN → Enter Ti-Hi / KQ entry; MPU lifecycle.',grandmaster:'PPP config flags; MPU database table; Kafka events during PPP; Troubleshooting pallet not loading into MPU.'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/GRYMTTR/pages/72634698/PPP+Process+Pallet+Put',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/ppp-flow',videoTitle:'PPP Flow Pallet Put'},
-      {code:'1.3.6',title:'Pallet Put',content:{pathfinder:'Pallet put use-case — reserve/bulk storage; Difference from tote-level put; Pallet bot role.',navigator:'Mission creation — layer-pick/claw/mag; Parent/child mission model; Operator role management (OGA/PAO).',grandmaster:'Mission manager DB; Pallet constraints config — weight/layers/footprint; Troubleshooting mission batching failures.'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/CE/pages/150406751',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/pallet-put',videoTitle:'Pallet Put Operations'}
-    ]},
-    {title:'Audit Flows',mods:[
-      {code:'1.4.1',title:'Vanilla Audit',content:{pathfinder:'What audit solves — inventory accuracy; Who triggers it; Audit types — spot, cycle, full-wall.',navigator:'Audit order creation UI; Rack-to-PPS flow; Operator scan/confirm UX; Discrepancy handling.',grandmaster:'Audit task table; Inventory adjustment flow; Commands to verify audit result; Troubleshooting discrepancy not updating inventory.'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/BS/pages/vanilla-audit',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/vanilla-audit',videoTitle:'Vanilla Audit Flow'},
-      {code:'1.4.2',title:'Cyclic Audit',content:{pathfinder:'Cyclic audit vs Vanilla audit — automated scheduling, no manual trigger; Benefit for continuous accuracy.',navigator:'Cyclic audit config — frequency, rack priority; Integration with pick scheduler; Manager Dashboard audit view.',grandmaster:'Cyclic audit scheduler service; Audit job table; Monitoring coverage in Influx/GEM; Troubleshooting cyclic audit not firing on schedule.'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/BS/pages/cyclic-audit',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/cyclic-audit',videoTitle:'Cyclic Audit Deep Dive'}
-    ]}
-  ]},
-  {id:'ttp',name:'Ranger TTP',sub:'Tote to Person',icon:'📦',certs:['pathfinder','navigator','grandmaster'],
-   sections:[
-    {title:'Platform & Infrastructure',mods:[
-      {code:'2.1.1',title:'Basic Architecture',content:{pathfinder:'<em>Content coming soon — TTP curriculum is currently under development.</em>',navigator:'<em>Content coming soon — TTP curriculum is currently under development.</em>',grandmaster:'<em>Content coming soon — TTP curriculum is currently under development.</em>'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/AKB/pages/136938239',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/ttp-architecture',videoTitle:'TTP Architecture Overview'},
-      {code:'2.1.2',title:'Database & Services',content:{pathfinder:'<em>Content coming soon — TTP curriculum is currently under development.</em>',navigator:'<em>Content coming soon — TTP curriculum is currently under development.</em>',grandmaster:'<em>Content coming soon — TTP curriculum is currently under development.</em>'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/BS/pages/ttp-database',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/ttp-database',videoTitle:'TTP Database & Services'},
-      {code:'2.1.3',title:'Conveyors',content:{pathfinder:'<em>Content coming soon — TTP curriculum is currently under development.</em>',navigator:'<em>Content coming soon — TTP curriculum is currently under development.</em>',grandmaster:'<em>Content coming soon — TTP curriculum is currently under development.</em>'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/AKB/pages/136938239',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/ttp-conveyors',videoTitle:'TTP Conveyor System'},
-      {code:'2.1.4',title:'PORT',content:{pathfinder:'<em>Content coming soon — TTP curriculum is currently under development.</em>',navigator:'<em>Content coming soon — TTP curriculum is currently under development.</em>',grandmaster:'<em>Content coming soon — TTP curriculum is currently under development.</em>'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/BS/pages/ttp-port',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/ttp-port',videoTitle:'TTP PORT Configuration'},
-      {code:'2.1.5',title:'Safety Controllers',content:{pathfinder:'<em>Content coming soon — TTP curriculum is currently under development.</em>',navigator:'<em>Content coming soon — TTP curriculum is currently under development.</em>',grandmaster:'<em>Content coming soon — TTP curriculum is currently under development.</em>'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/BS/pages/ttp-safety',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/ttp-safety',videoTitle:'TTP Safety Controllers'},
-      {code:'2.1.6',title:'Tower Application',content:{pathfinder:'<em>Content coming soon — TTP curriculum is currently under development.</em>',navigator:'<em>Content coming soon — TTP curriculum is currently under development.</em>',grandmaster:'<em>Content coming soon — TTP curriculum is currently under development.</em>'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/BS/pages/ttp-tower',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/ttp-tower',videoTitle:'TTP Tower Application'},
-      {code:'2.1.7',title:'Manager Dashboard',content:{pathfinder:'<em>Content coming soon — TTP curriculum is currently under development.</em>',navigator:'<em>Content coming soon — TTP curriculum is currently under development.</em>',grandmaster:'<em>Content coming soon — TTP curriculum is currently under development.</em>'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/GEM/pages/ttp-dashboard',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/ttp-dashboard',videoTitle:'TTP Manager Dashboard'}
-    ]},
-    {title:'Pick Flows',mods:[
-      {code:'2.2.1',title:'Pick to Bin',content:{pathfinder:'<em>Content coming soon — TTP curriculum is currently under development.</em>',navigator:'<em>Content coming soon — TTP curriculum is currently under development.</em>',grandmaster:'<em>Content coming soon — TTP curriculum is currently under development.</em>'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/BS/pages/ttp-pick-bin',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/ttp-pick-bin',videoTitle:'TTP Pick to Bin Flow'},
-      {code:'2.2.2',title:'Pick to Tote',content:{pathfinder:'<em>Content coming soon — TTP curriculum is currently under development.</em>',navigator:'<em>Content coming soon — TTP curriculum is currently under development.</em>',grandmaster:'<em>Content coming soon — TTP curriculum is currently under development.</em>'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/BS/pages/ttp-pick-tote',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/ttp-pick-tote',videoTitle:'TTP Pick to Tote Flow'}
-    ]},
-    {title:'Put Flows',mods:[
-      {code:'2.3.1',title:'UDP Put',content:{pathfinder:'<em>Content coming soon — TTP curriculum is currently under development.</em>',navigator:'<em>Content coming soon — TTP curriculum is currently under development.</em>',grandmaster:'<em>Content coming soon — TTP curriculum is currently under development.</em>'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/BS/pages/ttp-udp-put',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/ttp-udp',videoTitle:'TTP UDP Put'},
-      {code:'2.3.2',title:'SDP Put',content:{pathfinder:'<em>Content coming soon — TTP curriculum is currently under development.</em>',navigator:'<em>Content coming soon — TTP curriculum is currently under development.</em>',grandmaster:'<em>Content coming soon — TTP curriculum is currently under development.</em>'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/BS/pages/ttp-sdp-put',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/ttp-sdp',videoTitle:'TTP SDP Put'},
-      {code:'2.3.3',title:'Rollcage Put',content:{pathfinder:'<em>Content coming soon — TTP curriculum is currently under development.</em>',navigator:'<em>Content coming soon — TTP curriculum is currently under development.</em>',grandmaster:'<em>Content coming soon — TTP curriculum is currently under development.</em>'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/BS/pages/ttp-rollcage-put',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/ttp-rollcage',videoTitle:'TTP Rollcage Put'}
-    ]}
-  ]},
-  {id:'tools',name:'Tools & Techniques',sub:'Operational Toolkit',icon:'🛠️',certs:['toolscert'],
-   sections:[
-    {title:'Log Analysis',mods:[
-      {code:'T1.1',title:'Kibana Logs Viewer',content:{toolscert:'Navigate Kibana interface. Build KQL queries to filter by service, time range, and log level. Create dashboards for real-time monitoring. Correlate logs across multiple services for root cause analysis. Key KQL patterns: <code>service:"butler-server" AND level:"ERROR" AND message:"STUCK"</code>.'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/GEM/pages/kibana-guide',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/kibana',videoTitle:'Kibana KQL Masterclass'},
-      {code:'T1.2',title:'klogviewer',content:{toolscert:'Use klogviewer for Butler Server log analysis. Parse Erlang OTP logs. Identify crash reports, supervisor restarts, and gensaga timeouts. Filter by process name and timestamp. Key patterns: gen_server crashes, supervisor restart loops.'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/BS/pages/klogviewer-guide',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/klogviewer',videoTitle:'klogviewer for Butler Logs'},
-      {code:'T1.3',title:'GMC Log Analysis',content:{toolscert:'Interpret GMC (Grey Matter Controller) logs. Identify bot command failures, navigation errors, and communication timeouts. Correlate GMC logs with Platform and Butler logs using correlation IDs.'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/BS/pages/gmc-log-analysis',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/gmc-logs',videoTitle:'GMC Log Analysis Guide'},
-      {code:'T1.4',title:'IMS Log Analysis',content:{toolscert:'Read and interpret IMS (Inventory Management System) logs. Identify inventory mismatch errors, TPID failures, and slot state inconsistencies. Key log patterns for ON_HOLD_INVENTORY and INVENTORY_MISMATCH errors.'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/BS/pages/ims-logs',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/ims-logs',videoTitle:'IMS Log Analysis'},
-      {code:'T1.5',title:'Erlang Log Analysis',content:{toolscert:'Understand Erlang OTP log format. Identify gen_server crashes, supervision tree failures, and Mnesia errors. Use Observer CLI for live process inspection. Key patterns: {EXIT, Reason}, supervisor child_spec errors.'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/BS/pages/erlang-logs',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/erlang-logs',videoTitle:'Erlang OTP Log Patterns'},
-      {code:'T1.6',title:'PF Log Analysis',content:{toolscert:'Parse Pick Front (PF) logs. Identify FSM state transition failures. Understand PF state machine states: IDLE, RACK_ARRIVING, PICKING, PICK_COMPLETE, RACK_DEPARTING. Correlate with IMS and GMC for full pick flow debugging.'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/BS/pages/pf-logs',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/pf-logs',videoTitle:'Pick Front Log Analysis'},
-      {code:'T1.7',title:'Platform Log Analysis',content:{toolscert:'Platform Java service log analysis. Thread pool exhaustion identification. Kafka consumer lag detection. Service request lifecycle tracing through Platform logs. Key log patterns for order assignment failures and API errors.'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/GRYMTTR/pages/platform-logs',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/platform-logs',videoTitle:'Platform Service Log Analysis'},
-      {code:'T1.8',title:'MVTS Log Analysis',content:{toolscert:'Multi-Vehicle Traffic System log analysis. Navigation conflict identification. Bot deadlock detection. MVTS metric correlation with operational throughput impact.'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/BS/pages/mvts-logs',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/mvts-logs',videoTitle:'MVTS Debugging Guide'},
-      {code:'T1.9',title:'Tower / MD Log Analysis',content:{toolscert:'Tower and Manager Dashboard log analysis. RabbitMQ connection issue patterns. ElasticSearch sync failure identification. API timeout patterns in MD logs.'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/GEM/pages/tower-md-logs',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/tower-md-logs',videoTitle:'Tower & MD Log Analysis'}
-    ]},
-    {title:'Database & Runtime',mods:[
-      {code:'T2.1',title:'PostgreSQL',content:{toolscert:'Connect to Platform PostgreSQL DB. Navigate key tables: service_request, inventory, orders, audit_task, put_transaction. Write safe diagnostic SELECT queries. Understand when UPDATE/DELETE requires caution. Basic maintenance: VACUUM, pg_repack for bloated tables.'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/GEM/pages/postgresql-guide',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/postgresql',videoTitle:'PostgreSQL for Support Engineers'},
-      {code:'T2.2',title:'Mnesia Held Lock',content:{toolscert:'Identify and resolve Mnesia held locks in Butler Server. Commands: mnesia:info(), mnesia:system_info(held_locks). Understand dirty vs transactional reads. Safe lock clearing procedure without data corruption.'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/BS/pages/mnesia-locks',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/mnesia-locks',videoTitle:'Mnesia Lock Resolution'},
-      {code:'T2.3',title:'Gensaga / GM Diagnostic',content:{toolscert:'Use gensaga for Butler Server inter-process messaging inspection. GM Diagnostic Tool for system health checks. gmbootup verification sequence. Data sanity commands and how to interpret their output.'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/BS/pages/gm-diagnostic',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/gm-diagnostic',videoTitle:'GM Diagnostic Tool Guide'}
-    ]},
-    {title:'Messaging & Streaming',mods:[
-      {code:'T3.1',title:'Kafka',content:{toolscert:'Kafka architecture in GreyOrange context. Key topics: platform.service-request, butler.task.assigned, butler.notification. Consumer group lag monitoring. Message inspection for debugging stuck flows.'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/GRYMTTR/pages/kafka-guide',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/kafka',videoTitle:'Kafka in GreyOrange Platform'},
-      {code:'T3.2',title:'KOWL',content:{toolscert:'Use KOWL UI for Kafka monitoring. Browse topics, consumer groups, and individual messages. Identify message processing failures by inspecting payload. Export messages for cross-referencing with application logs.'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/GEM/pages/kowl-guide',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/kowl',videoTitle:'KOWL Kafka UI Guide'}
-    ]},
-    {title:'Monitoring Dashboards',mods:[
-      {code:'T4.1',title:'GEM Dashboard',content:{toolscert:'Navigate GEM (GreyMatter Enterprise Monitoring) dashboard. Interpret system health panels. Set alert thresholds. Correlate GEM alerts with operational incidents.'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/GEM/pages/gem-dashboard',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/gem-dashboard',videoTitle:'GEM Dashboard Guide'},
-      {code:'T4.2',title:'CloudWatch Dashboard',content:{toolscert:'AWS CloudWatch for cloud-deployed sites. Key metrics for POD health. Log group navigation. Setting metric alarms for critical thresholds.'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/SRE/pages/cloudwatch-guide',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/cloudwatch',videoTitle:'CloudWatch for GO Sites'},
-      {code:'T4.3',title:'Order Processing Dashboard',content:{toolscert:'Monitor order throughput in real-time. Identify stuck order patterns. SLA breach early warning indicators.'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/GEM/pages/order-dashboard',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/order-dashboard',videoTitle:'Order Processing Dashboard'},
-      {code:'T4.4',title:'MVTS Debugging Dashboard',content:{toolscert:'Bot traffic analysis. Identify hotspots and congestion zones. Navigation metric interpretation and correlation with productivity drops.'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/GEM/pages/mvts-dashboard',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/mvts-dashboard',videoTitle:'MVTS Debugging Dashboard'},
-      {code:'T4.5',title:'R2R Debugging Dashboard',content:{toolscert:'Rack-to-Rack metric analysis. Identify inefficient rack routing. R2R KPI benchmarks and improvement strategies.'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/GEM/pages/r2r-dashboard',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/r2r-dashboard',videoTitle:'R2R Debugging Dashboard'},
-      {code:'T4.6',title:'Network Ping Dashboard',content:{toolscert:'Monitor network latency across bots and servers. Identify connectivity issues before they cause operational impact. Benchmark ping thresholds for GreyOrange hardware.'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/GEM/pages/network-dashboard',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/network-dashboard',videoTitle:'Network Monitoring Guide'},
-      {code:'T4.7',title:'AIO Latency Dashboard',content:{toolscert:'All-in-one latency monitoring. API response time tracking. Identify slow endpoints causing operator experience degradation. Correlate latency spikes with pick rate drops.'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/GEM/pages/aio-latency',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/aio-latency',videoTitle:'AIO Latency Dashboard'}
-    ]},
-    {title:'API & Dev Tools',mods:[
-      {code:'T5.1',title:'Postman',content:{toolscert:'Use GreyOrange Postman collections. Authenticate with service tokens. Test service requests, order creation, and inventory APIs. Interpret API error response codes and messages.'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/GRYMTTR/pages/postman-guide',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/postman',videoTitle:'Postman API Testing Guide'},
-      {code:'T5.2',title:'Observer CLI',content:{toolscert:'Erlang Observer CLI for live Butler Server process inspection. Process list analysis. Memory and CPU profiling. Identify runaway processes causing system degradation.'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/BS/pages/observer-cli',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/observer-cli',videoTitle:'Observer CLI Deep Dive'},
-      {code:'T5.3',title:'GitHub Code Repo',content:{toolscert:'Navigate GreyOrange GitHub repositories. Find relevant service code for debugging context. Read release notes and changelogs. Understand branching strategy for version identification on customer sites.'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/BS/pages/github-guide',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/github',videoTitle:'GitHub Repository Navigation'},
-      {code:'T5.4',title:'Influx UI',content:{toolscert:'InfluxDB for time-series metrics. Query bot performance data. Create custom metric views for site health monitoring. Export data for trend analysis and reporting.'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/GEM/pages/influx-guide',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/influx',videoTitle:'InfluxDB Metrics Guide'},
-      {code:'T5.5',title:'GCM Tool',content:{toolscert:'Grey Matter Configuration tool usage. Site configuration management. Parameter update procedures. Configuration audit and rollback for when a config change causes operational issues.'},docLink:'https://greyorange-work.atlassian.net/wiki/spaces/GRYMTTR/pages/gcm-tool',videoLink:'https://confluence.greyorange.com/wiki/spaces/TAC/pages/training/gcm-tool',videoTitle:'GCM Configuration Tool'}
-    ]}
-  ]}
-];
+const PRODUCTS=[];
 
 // Default questions (seeded into localStorage on first load)
 const DEFAULT_QUESTIONS={
-  'rtp-pathfinder':[
-    {id:1,text:'What are the three primary components that form the core of the Ranger RTP system architecture?',opts:['Platform Server, Butler Server, Integration Layer','GMC, IMS, PF','Kafka, PostgreSQL, Mnesia','Tower, Manager Dashboard, Kibana'],correct:0},
-    {id:2,text:'What is the primary function of the Butler Server in the RTP architecture?',opts:['Manages the AIO operator UI screens','Orchestrates robots and manages real-time warehouse state in Erlang/OTP','Stores customer orders and inventory data permanently','Monitors network connectivity and robot battery levels'],correct:1},
-    {id:3,text:'Which database does the Butler Server primarily use to store real-time warehouse state?',opts:['PostgreSQL','InfluxDB','Mnesia','ElasticSearch'],correct:2},
-    {id:4,text:'What does RTP stand for in the GreyOrange product portfolio?',opts:['Real-Time Processing','Rack To Person','Robot Task Planner','Remote Terminal Protocol'],correct:1},
-    {id:5,text:'What business problem does a System Pause safety state solve?',opts:['Speeds up robot charging scheduling','Halts all robots site-wide during a safety incident or maintenance window','Manages order assignment priority','Monitors inventory accuracy'],correct:1},
-    {id:6,text:'Which of the following is NOT one of the four safety device types in GreyMatter?',opts:['Light Curtain','Fire Emergency','Zone Pause','Order Throttle Controller'],correct:3},
-    {id:7,text:'What is the primary role of the Tower Application in the RTP system?',opts:['Provides customer-facing reporting and analytics','Orchestrates robot movement and task assignment (RTM)','Manages inventory levels and slot assignments','Controls conveyor belt speed and routing'],correct:1},
-    {id:8,text:'What does PPS stand for in the context of Ranger RTP operations?',opts:['Platform Processing Service','Pick Put Station — the workstation where operators pick or put items','Parallel Processing System','Product Placement Server'],correct:1},
-    {id:9,text:'What operational problem does Zero Walk flow primarily solve for customers?',opts:['Reduces robot battery consumption by 30%','Eliminates operator walking between stations by sequencing all picks to a single PPS','Speeds up put-away operations during induction','Improves cyclic audit scheduling accuracy'],correct:1},
-    {id:10,text:'When would a re-warehousing operation be triggered?',opts:['When orders are cancelled by the customer','To consolidate sparse racks and optimise slot utilisation for better robot efficiency','During robot maintenance scheduling windows','When inventory needs to be permanently deleted'],correct:1},
-    {id:11,text:'Which put flow type has the system automatically select the optimal slot for each item?',opts:['UDP Put (User-Directed)','SDP Put (System-Directed)','PPP Flow','Vanilla Put'],correct:1},
-    {id:12,text:'What technology does Manager Dashboard use to serve search and order data to the UI?',opts:['Direct PostgreSQL full-text search queries','ElasticSearch indexed by the elastic-sync-service','Kafka Streams real-time processing','InfluxDB time-series queries'],correct:1},
-    {id:13,text:'What is the key difference between Cyclic Audit and Vanilla Audit?',opts:['Cyclic Audit requires an operator to manually trigger it','Cyclic Audit runs automatically on a configured schedule without manual trigger','Cyclic Audit only covers items currently in transit on robots','Cyclic Audit requires dedicated robot support'],correct:1},
-    {id:14,text:'In the Rollcage Pick flow, what is the specific role of a Dock Station at PPS?',opts:['Charges the robot during picking operations','Physically docks and undocks the rollcage at the PPS for secure picking','Stores overflow inventory when bins are full','Connects to the external WMS for order data'],correct:1},
-    {id:15,text:'What is the Integration Layer responsible for in the RTP architecture?',opts:['Managing robot navigation path planning','Bridging communication between the Platform and external WMS/ERP systems','Storing and indexing all audit records','Executing the pick scheduler weight logic'],correct:1},
-    {id:16,text:'Which pick flow is specifically designed for high-density storage with case-level picking?',opts:['Vanilla Pick','Streaming Flow','Shuttle Pick Flow','Zero Walk Flow'],correct:2},
-    {id:17,text:'What does an Item Recall operation enable for a customer?',opts:['Speeds up standard pick throughput for high-priority orders','Enables urgent retrieval of products from warehouse storage due to defect or expiry','Manages robot recalls to charging stations during low-activity periods','Cancels all active put-away operations in a zone'],correct:1},
-    {id:18,text:'What does PPP stand for in the context of RTP put-away operations?',opts:['Pick Put Process','Process Pallet Put','Platform Pallet Protocol','Parallel Pick Path'],correct:1},
-    {id:19,text:'In Streaming Flow, what is the fundamental operational difference from a standard batch pick wave?',opts:['Operators use different coloured AIO screens','Orders flow continuously into the pick queue without requiring a batch wave release','Robots move in a physically different navigation pattern','Operators use handheld barcode scanners instead of AIO screens'],correct:1},
-    {id:20,text:'What is the role of the Pick Scheduler weight concept in order assignment?',opts:['Controls the physical weight limits allowed on each rack','Determines order assignment priority based on SLA, order characteristics, and PPS availability','Measures and optimises robot energy consumption per pick','Assigns heavier items to stronger robot models'],correct:1}
-  ],
-  'rtp-navigator':[
-    {id:1,text:'In the Vanilla Pick UI flow, what action does the system take immediately after an operator confirms a pick on the AIO screen?',opts:['The rack automatically departs the PPS station','The system updates the bin status, deducts inventory in IMS, and evaluates the next task assignment','A new order is immediately assigned to the PPS without operator input','The robot is immediately recalled to its charging station'],correct:1},
-    {id:2,text:'Which Butler Server microservices are involved in the Vanilla Pick flow execution?',opts:['Only IMS (Inventory Management System)','IMS, GMC (Grey Matter Controller), and PF (Pick Front) working in sequence','Kibana, ElasticSearch, and the sync service','Tower and RabbitMQ exclusively'],correct:1},
-    {id:3,text:'In the SDP Put flow, what is the correct sequence of UI steps at the PPS?',opts:['Scan slot → scan item → stage item → wait for tote to arrive','Scan item → stage item → wait for tote to arrive → scan assigned slot to confirm','Wait for tote → scan item → confirm slot → stage','Stage item → scan item → scan slot → wait for tote'],correct:1},
-    {id:4,text:'How does RabbitMQ fit into the Tower Application architecture?',opts:['It permanently stores historical robot position data as a database','It serves as the message broker Tower uses to publish task assignments and receive robot status updates','It manages all PostgreSQL database read/write transactions','It processes all inbound HTTP API requests from the Tower UI'],correct:1},
-    {id:5,text:'In Zero Walk flow, what is the function of the ZW Carrier entity?',opts:['A physical trolley that the operator pushes between multiple PPS stations','A logical entity grouping all pick tasks for one operator at a single station, enabling zero walking','A specialised robot variant deployed only at Zero Walk sites','A UI component that displays the consolidated task list at the operator screen'],correct:1},
-    {id:6,text:'What UI action triggers the rollcage to undock from a PPS dock station after order completion?',opts:['The operator presses the physical emergency stop button on the dock station','Completion and confirmation of all pick tasks assigned to that rollcage triggers the undock prompt in the UI','The operator scans the rollcage barcode twice in rapid succession','A butler server service restart automatically triggers undocking'],correct:1},
-    {id:7,text:'What does the Order Manager Cycle do in the RTP pick flow system?',opts:['Archives and purges completed orders from the active database','Continuously evaluates eligible orders and assigns them to available PPS stations based on scheduler weights','Manages robot charging schedules based on battery percentage thresholds','Pushes real-time updates to the Manager Dashboard ElasticSearch indices'],correct:1},
-    {id:8,text:'In the MTU flow, what specifically happens during the Extraction sub-flow?',opts:['Permanently removing a product from the warehouse inventory system','The operator removes a specific tote from its rack slot for picking operations at PPS','Extracting diagnostic log data from the Butler Server database','Removing a mechanically stuck robot from a restricted warehouse zone'],correct:1},
-    {id:9,text:'How does the Platform push order and inventory data to the Manager Dashboard for display?',opts:['Platform directly writes to a Manager Dashboard-owned cache database in real-time','Platform pushes events to an ElasticSearch sync service which indexes data into ElasticSearch, queried by MD via Elastic APIs','Manager Dashboard queries PostgreSQL directly via a read replica','ElasticSearch writes updates directly to the Manager Dashboard UI component'],correct:1},
-    {id:10,text:'What determines which specific rack is selected for a pick task in standard Vanilla Pick flow?',opts:['The system selects randomly to distribute wear across the rack fleet','The Pick Scheduler weight concept evaluates rack eligibility, estimated travel distance, and task priority to select the optimal rack','The operator manually selects the rack from a dropdown in the AIO screen','The system always selects the rack that was most recently returned from PPS'],correct:1}
-  ],
-  'rtp-grandmaster':[
-    {id:1,text:'An order is stuck in "Created" status and is not being assigned to any PPS. What is the most appropriate first diagnostic step?',opts:['Immediately restart the butler_server service to clear the stuck state','Check Platform logs for service request processing errors and verify mandatory order assignment fields in PostgreSQL','Escalate directly to the R&D development team without further investigation','Clear all pending orders from the queue and request the customer to resubmit'],correct:1},
-    {id:2,text:'Which Mnesia command is used to verify that all Butler Server application modules have started correctly?',opts:['mnesia:info() — queries database status','gm_boot:is_app_started() — verifies all OTP application modules','butler:status() — general service health check','erlang:processes() — lists all active Erlang processes'],correct:1},
-    {id:3,text:'A rollcage cannot undock from a PPS dock station after pick order completion. What is the correct backend remediation approach?',opts:['Restart the Platform service and wait 5 minutes for automatic state recovery','Query the dock_station table in Mnesia for stuck IN_USE status and manually update the record to AVAILABLE after verifying all picks are complete','Delete the rollcage record from PostgreSQL permanently to clear the state','Disable the dock station configuration to allow the next rollcage to be used'],correct:1},
-    {id:4,text:'What does the gm_boot:data_sanity() command verify on the Butler Server?',opts:['Network connectivity between all registered robots and the Butler Server','Butler Server data integrity — validates that all critical Mnesia data structures are internally consistent and complete','PostgreSQL database schema version compatibility with the current Butler Server build','Kubernetes pod resource limits and JVM memory allocation'],correct:1},
-    {id:5,text:'An order shows status "On Hold - Inventory Pending" despite the SKU being physically present in the warehouse. What is the most likely cause and where do you look?',opts:['Check robot battery levels — low battery prevents rack retrieval for order fulfilment','Verify TPID and tag parameter matching in the inventory table — the exact tag attributes expected by the service request must match what is stored in PostgreSQL inventory records','Check the Manager Dashboard ElasticSearch sync status for outdated inventory data','Verify conveyor availability for the site — conveyor downtime can block inventory access'],correct:1},
-    {id:6,text:'How do you trace a Platform service request end-to-end through the Kafka messaging layer?',opts:['Search Kibana for the order ID pattern across all service logs simultaneously','Use KOWL to inspect the relevant Kafka topics and trace the message by its correlation ID sequentially through platform.service-request → butler.task.assigned → butler.notification topics','Query only the PostgreSQL service_request table for the complete lifecycle history','Use Postman to replay the original API request and observe the synchronous response chain'],correct:1},
-    {id:7,text:'A Zone Pause is active on site but the trigger source cannot be identified through the Manager Dashboard UI. What backend diagnostic approach do you take?',opts:['Check the PostgreSQL orders table for any orders created at the same timestamp as the Zone Pause','Query the zone_controller table in Mnesia for current state and cross-reference with the safety_event table in PostgreSQL to identify the trigger source, controller ID, and timestamp','Restart the safety controller service to clear the Zone Pause and resume operations','Check Kibana network logs for packet loss events coinciding with the Zone Pause trigger time'],correct:1},
-    {id:8,text:'What is the specific operational impact of a Mnesia Held Lock on Butler Server operations?',opts:['Held locks improve database read performance by caching frequently accessed records','Held locks block specific transactions from completing, causing flow stalls for all operations that need to write to the locked table until the lock is cleared or times out','Held locks only affect audit operations and have no impact on active pick or put flows','Held locks self-resolve within 30 seconds and have no meaningful operational impact'],correct:1},
-    {id:9,text:'How do you check XMX and XMN JVM memory settings for a running Platform microservice POD on a Kubernetes-deployed cloud site?',opts:['kubectl describe pod <pod-name> and inspect the env vars section or java_args for JVM flags','Check the server.xml Tomcat configuration file within the pod filesystem','Use the Manager Dashboard system health panel to view allocated memory per microservice','Run "free -m" on the jump server to see available memory across the cluster'],correct:0},
-    {id:10,text:'Which Kafka consumer group metric pattern definitively indicates a pick flow processing backlog requiring immediate investigation?',opts:['Consumer group lag is consistently zero — all messages being consumed immediately','Consumer group lag on the butler-notification consumer group is continuously increasing — messages are being produced faster than they are being consumed, indicating a bottleneck','The Kafka topic has multiple partitions configured — this is a normal high-throughput configuration','The consumer group committed offset is equal to the latest offset on the partition'],correct:1}
-  ],
-  'tools-toolscert':[
-    {id:1,text:'In Kibana, which query language is used to write log search and filter queries?',opts:['SQL (Structured Query Language)','KQL — Kibana Query Language','Lucene regex syntax exclusively','GraphQL query syntax'],correct:1},
-    {id:2,text:'What does a consistently and continuously increasing consumer group lag in Kafka definitively indicate?',opts:['The Kafka broker cluster has gone offline and is not accepting connections','Messages are being produced faster than the consumer can process them — indicating a downstream processing bottleneck or consumer failure','Simple network latency between two services causing delayed message delivery','Database write failures on the consumer side blocking acknowledgement'],correct:1},
-    {id:3,text:'What is KOWL primarily used for in a GreyOrange deployment context?',opts:['Viewing and searching application log files from multiple services','A Kafka topic inspection and consumer group monitoring UI tool for real-time messaging visibility','PostgreSQL database administration and query execution','Robot path and navigation pattern visualisation'],correct:1},
-    {id:4,text:'Which Mnesia function provides a comprehensive overview of database status including currently held locks and table statistics?',opts:['mnesia:dump_tables() — exports table content to disk','mnesia:system_info() — returns comprehensive database status including locks, transactions, and table info','mnesia:start() — initialises the Mnesia database application','mnesia:backup() — creates a backup of all database tables'],correct:1},
-    {id:5,text:'In Erlang Observer CLI, what does a very high and growing message queue length on a specific gen_server process indicate?',opts:['The process is operating at peak efficiency and handling maximum throughput','The process is a processing bottleneck — it is receiving messages faster than it can handle them, causing a queue buildup that will eventually crash the process','The process simply requires more memory allocation to function correctly','The process is safely idle and waiting for the next message to arrive'],correct:1},
-    {id:6,text:'What operational insight does the R2R Debugging Dashboard primarily provide to support teams?',opts:['Robot battery charging cycle efficiency and time-to-full-charge metrics','Identification of inefficient rack-to-rack bot routing patterns that increase R2R time and degrade throughput KPIs','Network packet loss and connectivity issues between server nodes','Operator pick error rates and exception frequency patterns'],correct:1},
-    {id:7,text:'What category of data is stored in InfluxDB within the GreyOrange platform context?',opts:['Customer order records and inventory master data','Time-series operational metrics — bot travel distances, pick rates, throughput over time, latency measurements','User authentication tokens and session management data','Warehouse physical layout configuration and zone definitions'],correct:1},
-    {id:8,text:'When configuring a Postman request to test a GreyOrange Platform API endpoint, what is typically required for the request to succeed?',opts:['Only the Content-Type header set to application/json','A valid Authorization token in the header plus Content-Type: application/json and the correctly structured request body payload','Database connection credentials passed as query parameters','The physical robot MAC address included in the request headers'],correct:1},
-    {id:9,text:'When the MVTS Debugging Dashboard shows a congestion spike in a specific warehouse zone, what does this operationally indicate?',opts:['Robots in that zone are safely returning to their charging stations as scheduled','Multiple bots are blocked or heavily contesting the same navigation paths in that zone, likely causing pick rate degradation','A scheduled software deployment or system update is occurring in that zone','Physical inventory counting activity is taking place in the affected area'],correct:1},
-    {id:10,text:'In PostgreSQL diagnostics for a stuck order scenario, which tables would you query to trace the complete order lifecycle?',opts:['robot_position and battery_level tables for robot availability','service_request, orders, and inventory tables — cross-referenced to trace the order state, inventory availability, and Platform processing history','elastic_sync_log and search_index tables for Manager Dashboard visibility','mnesia_backup and erlang_log tables for Butler Server state'],correct:1}
-  ]
+  'rtp-pathfinder':[],
+  'rtp-navigator':[],
+  'rtp-grandmaster':[],
+  'tools-toolscert':[]
 };
 
 // ════════════════════════════════════════
@@ -2285,19 +2029,6 @@ async function doLogin(){
       initApp();
       return;
     }
-    // catch(err){
-    //   const code=(err&&err.code)||'';
-    //   if(code==='auth/invalid-credential'||code==='auth/wrong-password'||code==='auth/user-not-found'){
-    //     showLoginError('Invalid credentials. Please check your email/password.');
-    //   }else if(code==='auth/too-many-requests'){
-    //     showLoginError('Too many failed attempts. Please try again later.');
-    //   }else{
-    //     showLoginError(err.code);
-    //     showLoginError('Firebase sign-in failed. Please verify your Firebase setup.');
-    //   }
-    //   return;
-    // }
-    // Look for the catch block inside your doLogin() function:
      catch(err) {
     console.error("Detailed Login Exception:", err); // Clear visual diagnostic log
     const code = (err && err.code) || '';
@@ -3327,7 +3058,22 @@ function exportCSV(){
   a.download=`ace_scores_${new Date().toISOString().split('T')[0]}.csv`;
   a.click();toast('CSV exported ✓','ok');
 }
+// login toggle button
+function toggleLoginPwd() {
+  const pwdInput = document.getElementById('loginPwd');
+  const eyeOpen = document.getElementById('eyeOpen');
+  const eyeClosed = document.getElementById('eyeClosed');
 
+  if (pwdInput.type === 'password') {
+    pwdInput.type = 'text';
+    eyeOpen.classList.add('hidden');
+    eyeClosed.classList.remove('hidden');
+  } else {
+    pwdInput.type = 'password';
+    eyeOpen.classList.remove('hidden');
+    eyeClosed.classList.add('hidden');
+  }
+}
 // ════════════════════════════════════════
 // TOAST
 // ════════════════════════════════════════

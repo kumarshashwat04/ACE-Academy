@@ -65,7 +65,7 @@ export default function CertificationsPage() {
   };
 
   return (
-    <AppShell currentTab="mycertifications">
+    <AppShell currentTab="certifications">
       {/* Scoped CSS styling for transparent, highly polished badge card components */}
       <style dangerouslySetInnerHTML={{ __html: `
         .badge-grid {

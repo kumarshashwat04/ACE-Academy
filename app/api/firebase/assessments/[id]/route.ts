@@ -1,19 +1,27 @@
 import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebaseAdmin";
+import { randomUUID } from "crypto"; // Use native Node.js crypto module
 
 type Question = {
+  id: string; // Unique identifier for each question
   questionText: string;
   options: string[];
   correctAnswer: string;
 };
 
+// Input type might not include the ID yet if it's coming from a frontend form
+type IncomingQuestion = Omit<Question, "id"> & { id?: string };
+
 type AssessmentPayload = {
-  quizId: "ttp-pathfinder" | "ttp-navigator" | "ttp-grandmaster"| "rtp-navigator" | "rtp-grandmaster"| "rtp-pathfinder" | "tools-navigator" | "tools-grandmaster"| "tools-pathfinder" ;
+  quizId: 
+    | "ttp-pathfinder" | "ttp-navigator" | "ttp-grandmaster"
+    | "rtp-navigator" | "rtp-grandmaster" | "rtp-pathfinder" 
+    | "tools-navigator" | "tools-grandmaster" | "tools-pathfinder";
   totalMarks: number;
   passingPercentage: number;
-  timeLimit: number; // e.g., in seconds or minutes
-  questions: Question[];
+  timeLimit: number;
+  questions: IncomingQuestion[]; // Accepts questions with or without IDs initially
 };
 
 export async function POST(request: Request) {
@@ -22,7 +30,11 @@ export async function POST(request: Request) {
     const { quizId, totalMarks, passingPercentage, timeLimit, questions } = body;
 
     // Validate allowed quiz IDs
-    const validIds = ["ttp-pathfinder", "ttp-navigator", "ttp-grandmaster", "rtp-navigator", "rtp-grandmaster", "rtp-pathfinder", "tools-navigator", "tools-grandmaster", "tools-pathfinder"];
+    const validIds = [
+      "ttp-pathfinder", "ttp-navigator", "ttp-grandmaster", 
+      "rtp-navigator", "rtp-grandmaster", "rtp-pathfinder", 
+      "tools-navigator", "tools-grandmaster", "tools-pathfinder"
+    ];
     if (!quizId || !validIds.includes(quizId)) {
       return NextResponse.json(
         { error: "Invalid or missing quizId. Must be one of the allowed quiz IDs." },
@@ -38,6 +50,12 @@ export async function POST(request: Request) {
       );
     }
 
+    // Map over questions to ensure every single one has a unique ID natively
+    const questionsWithIds: Question[] = questions.map((q) => ({
+      ...q,
+      id: q.id || randomUUID(), // Uses existing unique ID if provided, otherwise generates a standard native UUIDv4
+    }));
+
     // Save to Firestore using the quizId as the document ID
     await getAdminDb()
       .collection("assessments")
@@ -48,8 +66,8 @@ export async function POST(request: Request) {
           totalMarks,
           passingPercentage,
           timeLimit,
-          questions,
-          createdAt: FieldValue.serverTimestamp(),
+          questions: questionsWithIds, // Save the updated questions array with unique IDs
+          createdAt: FieldValue.serverTimestamp(), 
           updatedAt: FieldValue.serverTimestamp(),
         },
         { merge: true } // Merges if doc exists, creates if it doesn't

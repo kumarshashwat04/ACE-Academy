@@ -115,12 +115,15 @@ export default function AppShell({ children, currentTab }: AppShellProps) {
           <div className={`nav ${currentTab === "certifications" ? "on" : ""}`} onClick={() => handleNavigation("certifications")}>
             <span className="nav-ico">◎</span>My Certifications
           </div>
+           <div className={`nav ${currentTab === "globalCourse" ? "on" : ""}`} onClick={() => handleNavigation("globalCourse")}>
+            <span className="nav-ico">◎</span>Global Course
+          </div>
 
           {/* Conditional Admin Sidebar Rendering */}
           {user.role === "admin" && (
             <>
               <div className="sid-label">Admin</div>
-              <div className={`nav ${currentTab === "admin" ? "on" : ""}`} onClick={() => handleNavigation("admin")}>
+              <div className={`nav ${currentTab === "manageprogram" ? "on" : ""}`} onClick={() => handleNavigation("manageprogram")}>
                 <span className="nav-ico">⚙</span>Manage Program
               </div>
               <div className={`nav ${currentTab === "scores" ? "on" : ""}`} onClick={() => handleNavigation("scores")}>
