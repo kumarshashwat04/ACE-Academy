@@ -24,3 +24,4 @@ pnpm-debug.log*
 # local workspace artifacts
 /.cache
 /.config
+.env

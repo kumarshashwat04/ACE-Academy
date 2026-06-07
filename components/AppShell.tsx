@@ -66,7 +66,7 @@ export default function AppShell({ children, currentTab }: AppShellProps) {
     localStorage.removeItem('ace2_session_user');
     localStorage.clear();
     console.log("Signing out user...");
-    router.push("");
+    router.push("/");
   };
 
   return (

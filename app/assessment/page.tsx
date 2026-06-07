@@ -739,7 +739,7 @@ export default function AssessmentsPage() {
           <div style={{ display: "flex", gap: "16px", width: "100%" }}>
             <button onClick={() => setResultData(null)} style={{ flex: 1, backgroundColor: "transparent", border: "1px solid #30363d", color: "#c9d1d9", borderRadius: "10px", padding: "16px", fontSize: "15px", fontWeight: "600", cursor: "pointer", transition: "0.2s" }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#21262d"} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}>← Back to Assessments</button>
             {isPassed && (
-              <button onClick={() => setResultData(null)} style={{ flex: 1, backgroundColor: "#6c5ce7", border: "none", color: "#ffffff", borderRadius: "10px", padding: "16px", fontSize: "15px", fontWeight: "600", cursor: "pointer", transition: "0.2s", boxShadow: "0 4px 20px rgba(108,92,231,0.3)" }} onMouseEnter={(e) => e.currentTarget.style.opacity = "0.9"} onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}>View Certifications →</button>
+              <button onClick={() => { setResultData(null); window.location.href = '/certifications'; }} style={{ flex: 1, backgroundColor: "#6c5ce7", border: "none", color: "#ffffff", borderRadius: "10px", padding: "16px", fontSize: "15px", fontWeight: "600", cursor: "pointer", transition: "0.2s", boxShadow: "0 4px 20px rgba(108,92,231,0.3)" }} onMouseEnter={(e) => e.currentTarget.style.opacity = "0.9"} onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}>View Certifications →</button>
             )}
           </div>
         </div>

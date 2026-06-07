@@ -2366,7 +2366,14 @@ function goPage(p){
 }
 ////
 function routeTo(path) {
-    window.location.href = "/" + path;
+    const cleanPath = path.startsWith('/') ? path : '/' + path;
+    
+    // 2. Changes the URL without reloading the page
+    window.history.pushState({}, '', cleanPath);
+    
+    // 3. Dispatch a custom event so your app knows the route changed
+    const navEvent = new PopStateEvent('popstate');
+    window.dispatchEvent(navEvent);
 }
 // ════════════════════════════════════════
 // DASHBOARD
@@ -2474,6 +2481,10 @@ function rDash(){
   document.getElementById('dashProgress').innerHTML=progHtml;
 
   // ── CERTIFICATION JOURNEY ──
+  window.routeTo = function(path) {
+    const cleanPath = path.startsWith('/') ? path : '/' + path;
+    window.parent.location.href = cleanPath;
+};
   let jHtml='<div class="ph" style="margin-bottom:14px;margin-top:8px"><h2 style="font-size:16px;font-weight:700">Certification Journey</h2></div>';
   PRODUCTS.forEach(prod=>{
     jHtml+=`<div class="journey-wrap"><div class="journey-prod-title"><span>${prod.icon}</span>${prod.name} — ${prod.sub}</div><div class="journey">`;
@@ -2486,14 +2497,14 @@ function rDash(){
       const prevOk=i===0||(prevLevel&&prevLevel.status==='completed');
       const st=passed?'earned':(!prevOk||(level&&level.status==='locked'))?'locked':'available';
       if(i>0) jHtml+=`<div class="jarrow">→</div>`;
-      jHtml+=`<div class="jstep ${st}" onclick="${st!=='locked'?"goPage('assess')":''}">
-        <div class="jbadge ${st}">${st==='earned'?'✓ Certified':st==='available'?'Ready':'🔒 Locked'}</div>
-        <div class="jstep-ico">${m.icon}</div>
-        <div class="jstep-name">${m.name}</div>
-        <div class="jstep-desc">${m.desc}</div>
-      </div>`;
-    });
-    jHtml+=`</div></div>`;
+ jHtml += `<div class="jstep ${st}" onclick="routeTo('assessment')">
+      <div class="jbadge ${st}">${st === 'earned' ? '✓ Certified' : st === 'available' ? 'Ready' : '🔒 Locked'}</div>
+      <div class="jstep-ico">${m.icon}</div>
+      <div class="jstep-name">${m.name}</div>
+      <div class="jstep-desc">${m.desc}</div>
+    </div>`;
+  });
+  jHtml+=`</div></div>`;
   });
   document.getElementById('dashJourney').innerHTML=jHtml;
 }
