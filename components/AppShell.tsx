@@ -35,7 +35,7 @@ export default function AppShell({ children, currentTab }: AppShellProps) {
   const [user, setUser] = useState<UserType>({
     name: "Anish Kumar",
     team: "TAC",
-    role: "admin",
+    role: "learner",
     av: "AK"
   });
 
