@@ -628,31 +628,58 @@ export default function SyllabusPage() {
   }, [completedModules]);
 
   // Toggle completion handler bound safely to nested segments
-  const handleToggleComplete = async (e: React.MouseEvent, moduleCode: string) => {
-    e.stopPropagation(); 
-    
-    // Create a precise scoped key: e.g., "rtp-pathfinder::0.1.2"
-    const currentSegmentKey = `${activeId}-${activeLevel}`;
-    const globalModuleKey = `${currentSegmentKey}::${moduleCode}`;
-    const nextState = !completedModules[globalModuleKey];
-    
-    // Optimistic UI state update
-    setCompletedModules((prev) => ({
-      ...prev,
-      [globalModuleKey]: nextState,
-    }));
+ const handleToggleComplete = async (e: React.MouseEvent, moduleCode: string) => {
+  e.stopPropagation(); 
+  
+  const currentSegmentKey = `${activeId}-${activeLevel}`;
+  const globalModuleKey = `${currentSegmentKey}::${moduleCode}`;
+  const nextState = !completedModules[globalModuleKey];
+  
+  // 1. Existing Optimistic React UI State update
+  setCompletedModules((prev) => ({
+    ...prev,
+    [globalModuleKey]: nextState,
+  }));
 
-    // Sync completion status back to database tier 
-    try {
-      await fetch(`/api/firebase/user/progress/${activeId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ moduleKey: moduleCode, level: activeLevel, completed: nextState }),
-      });
-    } catch (err) {
-      console.error("Error saving progress sync:", err);
+  // 2. ─── THE FIX: Sync with index.html's localStorage ───
+  try {
+    // Read current user ID from the active session string
+    const sessionUserRaw = localStorage.getItem('ace2_session_user');
+    if (sessionUserRaw) {
+      const user = JSON.parse(sessionUserRaw);
+      const userId = user.id;
+
+      // Pull down the main array index map index.html reads from
+      const aceDone = JSON.parse(localStorage.getItem('ace2_done') || '{}');
+      if (!aceDone[userId]) aceDone[userId] = {};
+
+      // Match the native string formatting exactly: "rtp-1.1.1-pathfinder"
+      const htmlAppStructuralKey = `${activeId}-${moduleCode}-${activeLevel}`;
+
+      if (nextState) {
+        aceDone[userId][htmlAppStructuralKey] = new Date().toISOString();
+      } else {
+        delete aceDone[userId][htmlAppStructuralKey];
+      }
+
+      // Save it back. This event triggers the 'storage' listener in index.html!
+      localStorage.setItem('ace2_done', JSON.stringify(aceDone));
     }
-  };
+  } catch (err) {
+    console.error("Failed to sync structural local logs to HTML layout:", err);
+  }
+
+  // 3. Existing database sync backend fetch
+  try {
+    await fetch(`/api/firebase/user/progress/${activeId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ moduleKey: moduleCode, level: activeLevel, completed: nextState }),
+    });
+  } catch (err) {
+    console.error("Error saving progress sync:", err);
+  }
+};
 
   const currentLevelData = syllabus?.levels?.find(
     (l) => l.name.toLowerCase().replace(/\s+/g, "") === activeLevel.toLowerCase()

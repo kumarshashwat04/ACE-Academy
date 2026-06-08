@@ -771,7 +771,7 @@ input, textarea, select {
 .q-dot { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid currentColor; display: flex; align-items: center; justify-content: center; font-size: 8px; flex-shrink: 0; }
 
 .timer-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-.timer-card { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: var(--surface2); border-radius: var(--r); border: 1px solid var(--border); }
+.timer-card {  padding: 14px 16px; background: var(--surface2); border-radius: var(--r); border: 1px solid var(--border); }
 .tcl { display: flex; align-items: center; gap: 9px; font-size: 13px; font-weight: 600; }
 .tcr { display: flex; align-items: center; gap: 12px; }
 .tcr-group { display: flex; align-items: center; gap: 6px; }
@@ -1193,3 +1193,122 @@ z/* Container alignment */
 .btn-nxt:active{transform:translateY(0)}
 .btn-sub{background:linear-gradient(135deg,var(--green),#0C9166);box-shadow:0 4px 16px rgba(16,185,129,.3)}
 .btn-sub:hover{box-shadow:0 6px 20px rgba(16,185,129,.4)!important}
+/* Coming soon page css */
+
+
+/* Cosmic Gradient Background Glows */
+.glowTop {
+  position: absolute;
+  top: 25%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px;
+  height: 400px;
+  background: rgba(99, 102, 241, 0.12);
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+}
+
+.glowBottom {
+  position: absolute;
+  bottom: 20%;
+  left: 30%;
+  width: 300px;
+  height: 300px;
+  background: rgba(168, 85, 247, 0.08);
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+}
+
+.container {
+  max-width: 500px;
+  width: 100%;
+  text-center: center;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  align-items: center;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.subtitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: #818cf8;
+}
+
+.title {
+  font-size: 3rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin: 0;
+  background: linear-gradient(to right, #ffffff, #a3a3a3);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Countdown Clock Grid */
+.countdown {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  width: 100%;
+  max-width: 360px;
+  background: rgba(23, 23, 23, 0.6);
+  backdrop-filter: blur(12px);
+  padding: 1.25rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(63, 63, 70, 0.4);
+}
+
+.timeSegment {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.number {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.label {
+  font-size: 0.75rem;
+  color: #737373;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 0.25rem;
+}
+
+.footer {
+  position: absolute;
+  bottom: 1.5rem;
+  font-size: 0.75rem;
+  color: #404040;
+  letter-spacing: 0.05em;
+}
+
+@media (max-width: 480px) {
+  .title {
+    font-size: 2.5rem;
+  }
+  .number {
+    font-size: 1.75rem;
+  }
+  .countdown {
+    gap: 0.5rem;
+    padding: 1rem;
+  }
+}

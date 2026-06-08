@@ -2594,32 +2594,14 @@ function editSylLinks(key,title){
   sSyl(syl);rSyllabus();toast('Links saved ✓','ok');
 }
 
-function markDone(key,e){
-  e.stopPropagation();
-  const done=gDone();
-  if(!done[CU.id]) done[CU.id]={};
-  done[CU.id][key]=new Date().toISOString();
-  sDone(done);
-  // Update button immediately without full re-render
-  const btn=e.target;
-  btn.textContent='✓ Completed';
-  btn.classList.add('done-state');
-  // Update Done badge on the card header
-  const card=document.getElementById('mc-'+key);
-  if(card){
-    card.classList.add('mod-done');
-    const head=card.querySelector('.mod-head');
-    const chev=head.querySelector('.mod-chev');
-    if(!head.querySelector('.done-tag')){
-      const tag=document.createElement('span');
-      tag.className='done-tag';
-      tag.style.cssText='font-size:11px;font-weight:700;color:var(--green-l);background:var(--green-bg);padding:2px 8px;border-radius:10px;flex-shrink:0';
-      tag.textContent='✓ Done';
-      head.insertBefore(tag,chev);
-    }
+// Listen for changes made in page.tsx to update the counter instantly
+window.addEventListener('storage', (event) => {
+  // If modules are updated, recalculate the dashboard stats immediately
+  if (event.key === 'ace2_done') {
+    console.log("Syllabus progress updated from React app. Refreshing count...");
+    rDash(); 
   }
-  toast('Module marked as complete ✓','ok');
-}
+});
 
 // ════════════════════════════════════════
 // ASSESSMENTS HUB
@@ -2784,7 +2766,7 @@ function setAdminTab(t){
     document.getElementById('at-'+x).classList.toggle('on',x===t);
   });
   if(t==='questions') rAdminQuestions();
-  else if(t==='timers') rAdminTimers();
+  // else if(t==='timers') rAdminTimers();
   else if(t==='syllabus') rAdminSyl();
   else if(t==='users') rAdminUsers();
 }
