@@ -27,6 +27,7 @@ const TOOLS_LEVEL_SCHEMAS = [
 ];
 
 interface Question {
+  id?: string;
   questionText: string;
   options: string[];
   correctAnswer: string;
@@ -50,8 +51,54 @@ interface QuizResult {
   unlockMsg: string;
 }
 
+interface SavedProgress {
+  answers: Record<string, string>;
+  currentQuestionIndex: number;
+  timeLeft: number;
+  savedAt: number;
+}
+
 function getModuleNameForTab(tabId: string): string | undefined {
   return COURSE_TABS.find((tab) => tab.id === tabId)?.name;
+}
+
+// Stable key for a question's answer. Prefers a real id from the quiz doc,
+// falling back to position so order stays consistent within a single quiz.
+function getQid(question: Question, index: number): string {
+  return question.id ?? `idx-${index}`;
+}
+
+function progressKey(uid: string | null, quizId: string): string {
+  return `ace-assessment-progress:${uid ?? "anon"}:${quizId}`;
+}
+
+function loadProgress(uid: string | null, quizId: string): SavedProgress | null {
+  try {
+    const raw = localStorage.getItem(progressKey(uid, quizId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as SavedProgress;
+    // Ignore exhausted/expired attempts — nothing useful left to resume.
+    if (!parsed || typeof parsed.timeLeft !== "number" || parsed.timeLeft <= 0) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function saveProgress(uid: string | null, quizId: string, progress: SavedProgress) {
+  try {
+    localStorage.setItem(progressKey(uid, quizId), JSON.stringify(progress));
+  } catch {
+    /* localStorage unavailable (private mode / quota) — degrade silently */
+  }
+}
+
+function clearProgress(uid: string | null, quizId: string) {
+  try {
+    localStorage.removeItem(progressKey(uid, quizId));
+  } catch {
+    /* ignore */
+  }
 }
 
 export default function AssessmentsPage() {
@@ -64,8 +111,13 @@ export default function AssessmentsPage() {
   // --- Quiz Execution States ---
   const [activeQuizData, setActiveQuizData] = useState<QuizData | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
-  const [selectedAnswers, setSelectedAnswers] = useState<Record<number, string>>({});
+  const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [timeLeft, setTimeLeft] = useState<number>(0);
+
+  // --- Resume Prompt States ---
+  const [showResumePrompt, setShowResumePrompt] = useState(false);
+  const [pendingQuiz, setPendingQuiz] = useState<QuizData | null>(null);
+  const [pendingProgress, setPendingProgress] = useState<SavedProgress | null>(null);
 
   const timeLeftRef = useRef<number>(0);
   useEffect(() => {
@@ -99,6 +151,20 @@ export default function AssessmentsPage() {
     setAssessmentMeta({});
   };
 
+  const startQuiz = (data: QuizData, saved: SavedProgress | null) => {
+    const totalSeconds = data.timeLimit || 1800;
+    const initialTime = saved ? saved.timeLeft : totalSeconds;
+    setResultData(null);
+    setSelectedAnswers(saved ? saved.answers : {});
+    setCurrentQuestionIndex(saved ? saved.currentQuestionIndex : 0);
+    timeLeftRef.current = initialTime;
+    setTimeLeft(initialTime);
+    setShowResumePrompt(false);
+    setPendingQuiz(null);
+    setPendingProgress(null);
+    setActiveQuizData(data);
+  };
+
 const handleLevelClick = async (levelId: string) => {
     const targetQuizId = `${activeTabId}-${levelId}`;
     setActiveLoadingLevel(levelId);
@@ -116,13 +182,16 @@ const handleLevelClick = async (levelId: string) => {
         }));
 
         if (data.questions && data.questions.length > 0) {
-          setResultData(null); 
-          setSelectedAnswers({});
-          setCurrentQuestionIndex(0);
-          const totalSeconds = data.timeLimit || 1800;
-          timeLeftRef.current = totalSeconds;
-          setTimeLeft(totalSeconds);
-          setActiveQuizData(data);
+          const saved = loadProgress(getSessionUid(), data.quizId);
+          if (saved) {
+            // Offer to resume rather than silently restoring or wiping progress.
+            setResultData(null);
+            setPendingQuiz(data);
+            setPendingProgress(saved);
+            setShowResumePrompt(true);
+          } else {
+            startQuiz(data, null);
+          }
         } else {
           setShowConfigAlert(true);
         }
@@ -145,9 +214,11 @@ const handleLevelClick = async (levelId: string) => {
   };
 
   const handleOptionSelect = (option: string) => {
+    if (!activeQuizData?.questions) return;
+    const key = getQid(activeQuizData.questions[currentQuestionIndex], currentQuestionIndex);
     setSelectedAnswers((prev) => ({
       ...prev,
-      [currentQuestionIndex]: option,
+      [key]: option,
     }));
   };
 
@@ -171,7 +242,7 @@ const handleLevelClick = async (levelId: string) => {
 
     let correctCount = 0;
     activeQuizData.questions.forEach((q, index) => {
-      if (selectedAnswers[index] === q.correctAnswer) {
+      if (selectedAnswers[getQid(q, index)] === q.correctAnswer) {
         correctCount++;
       }
     });
@@ -230,6 +301,7 @@ const handleLevelClick = async (levelId: string) => {
         unlockMsg
       });
 
+      clearProgress(uid, activeQuizData.quizId);
       setActiveQuizData(null);
     } catch (error) {
       console.error(error);
@@ -257,12 +329,24 @@ const handleLevelClick = async (levelId: string) => {
     return () => clearInterval(timer);
   }, [activeQuizData, executeQuizSubmit]);
 
-  const ModernSystemModal = ({ title, message, onConfirm, onCancel, confirmText = "OK", isDestructive = false }: {
+  // Persist in-progress state so the user can resume after a refresh/close.
+  useEffect(() => {
+    if (!activeQuizData) return;
+    saveProgress(getSessionUid(), activeQuizData.quizId, {
+      answers: selectedAnswers,
+      currentQuestionIndex,
+      timeLeft,
+      savedAt: Date.now(),
+    });
+  }, [activeQuizData, selectedAnswers, currentQuestionIndex, timeLeft]);
+
+  const ModernSystemModal = ({ title, message, onConfirm, onCancel, confirmText = "OK", cancelText = "Cancel", isDestructive = false }: {
     title: string;
     message: string;
     onConfirm: () => void;
     onCancel?: () => void;
     confirmText?: string;
+    cancelText?: string;
     isDestructive?: boolean;
   }) => (
     <div style={{
@@ -282,7 +366,7 @@ const handleLevelClick = async (levelId: string) => {
             <button onClick={onCancel} style={{
               padding: "10px 20px", borderRadius: "8px", border: "1px solid #444c56",
               backgroundColor: "transparent", color: "#adbac7", cursor: "pointer", fontSize: "14px", fontWeight: "500"
-            }}>Cancel</button>
+            }}>{cancelText}</button>
           )}
           <button onClick={onConfirm} style={{
             padding: "10px 20px", borderRadius: "8px", border: "none",
@@ -330,6 +414,7 @@ const handleLevelClick = async (levelId: string) => {
 
   if (activeQuizData && activeQuizData.questions) {
     const currentQuestion = activeQuizData.questions[currentQuestionIndex];
+    const currentQid = getQid(currentQuestion, currentQuestionIndex);
     const totalQuestions = activeQuizData.questions.length;
     const trackingHeaderLabel = `${activeQuizData.id.replace("-", " — ").toUpperCase()}`;
     const answeredCount = Object.keys(selectedAnswers).length;
@@ -337,7 +422,7 @@ const handleLevelClick = async (levelId: string) => {
     return (
       <div style={{ backgroundColor: "#0d1117", color: "#ffffff", minHeight: "100vh", width: "100vw", fontFamily: "sans-serif", padding: "40px 20px", boxSizing: "border-box", display: "flex", flexDirection: "column", alignItems: "center" }}>
         {showExitConfirm && (
-          <ModernSystemModal title="Exit Assessment?" message="Are you sure you want to exit? Your progressive answers will be lost." confirmText="Exit Quiz" isDestructive={true} onConfirm={() => { setShowExitConfirm(false); setActiveQuizData(null); }} onCancel={() => setShowExitConfirm(false)} />
+          <ModernSystemModal title="Exit Assessment?" message="Are you sure you want to exit? Your progressive answers will be lost." confirmText="Exit Quiz" isDestructive={true} onConfirm={() => { setShowExitConfirm(false); if (activeQuizData) clearProgress(getSessionUid(), activeQuizData.quizId); setActiveQuizData(null); }} onCancel={() => setShowExitConfirm(false)} />
         )}
         {showSubmitConfirm && (
           <ModernSystemModal title="Finish Assessment?" message={answeredCount < totalQuestions ? `You have only answered ${answeredCount}/${totalQuestions} questions. Do you want to submit anyway?` : "Are you sure you want to finish and submit this assessment?"} confirmText="Submit Now" onConfirm={() => executeQuizSubmit(false)} onCancel={() => setShowSubmitConfirm(false)} />
@@ -358,7 +443,7 @@ const handleLevelClick = async (levelId: string) => {
             <h2 style={{ fontSize: "22px", fontWeight: "600", marginTop: "12px", marginBottom: "32px", color: "#f0f6fc", lineHeight: "1.4" }}>{currentQuestion.questionText}</h2>
             <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
               {currentQuestion.options.map((option) => {
-                const isSelected = selectedAnswers[currentQuestionIndex] === option;
+                const isSelected = selectedAnswers[currentQid] === option;
                 return (
                   <div key={option} onClick={() => handleOptionSelect(option)} style={{ border: isSelected ? "1px solid #58a6ff" : "1px solid #30363d", backgroundColor: isSelected ? "rgba(56, 139, 253, 0.1)" : "#0d1117", borderRadius: "8px", padding: "18px 24px", cursor: "pointer", display: "flex", alignItems: "center", gap: "16px", transition: "all 0.2s" }} onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.borderColor = "#8b949e"; }} onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.borderColor = "#30363d"; }}>
                     <div style={{ width: "20px", height: "20px", borderRadius: "50%", border: isSelected ? "6px solid #58a6ff" : "2px solid #30363d", backgroundColor: isSelected ? "#0d1117" : "transparent", boxSizing: "border-box" }} />
@@ -370,7 +455,7 @@ const handleLevelClick = async (levelId: string) => {
           </div>
 
           <div style={{ display: "flex", justifyContent: "flex-end" }}>
-            <button onClick={handleNext} disabled={!selectedAnswers[currentQuestionIndex] || isSubmitting} style={{ backgroundColor: !selectedAnswers[currentQuestionIndex] || isSubmitting ? "#30363d" : "#6c5ce7", color: !selectedAnswers[currentQuestionIndex] || isSubmitting ? "#8b949e" : "#ffffff", border: "none", borderRadius: "8px", padding: "14px 36px", fontSize: "16px", fontWeight: "600", cursor: !selectedAnswers[currentQuestionIndex] || isSubmitting ? "not-allowed" : "pointer", transition: "opacity 0.2s" }} onMouseEnter={(e) => { if (selectedAnswers[currentQuestionIndex]) e.currentTarget.style.opacity = "0.9"; }} onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}>
+            <button onClick={handleNext} disabled={!selectedAnswers[currentQid] || isSubmitting} style={{ backgroundColor: !selectedAnswers[currentQid] || isSubmitting ? "#30363d" : "#6c5ce7", color: !selectedAnswers[currentQid] || isSubmitting ? "#8b949e" : "#ffffff", border: "none", borderRadius: "8px", padding: "14px 36px", fontSize: "16px", fontWeight: "600", cursor: !selectedAnswers[currentQid] || isSubmitting ? "not-allowed" : "pointer", transition: "opacity 0.2s" }} onMouseEnter={(e) => { if (selectedAnswers[currentQid]) e.currentTarget.style.opacity = "0.9"; }} onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}>
               {isSubmitting ? "Submitting..." : currentQuestionIndex === totalQuestions - 1 ? "Submit Assessment" : "Next →"}
             </button>
           </div>
@@ -387,6 +472,19 @@ const handleLevelClick = async (levelId: string) => {
       {showConfigAlert && <ModernSystemModal title="Empty Assessment Layout" message="No questions found for this configuration layout." onConfirm={() => setShowConfigAlert(false)} />}
       {showLoginAlert && <ModernSystemModal title="Authentication Needed" message="You must be signed in to submit an assessment." onConfirm={() => setShowLoginAlert(false)} />}
       {showTimeoutAlert && <ModernSystemModal title="Time Expired" message="Time is up! Your assessment is being automatically calculated." onConfirm={() => setShowTimeoutAlert(false)} />}
+      {showResumePrompt && pendingQuiz && pendingProgress && (
+        <ModernSystemModal
+          title="Resume Previous Attempt?"
+          message={`You have a saved attempt — ${Object.keys(pendingProgress.answers).length} answered, ${formatTime(pendingProgress.timeLeft)} remaining. Resume where you left off, or start over?`}
+          confirmText="Resume"
+          cancelText="Start Over"
+          onConfirm={() => startQuiz(pendingQuiz, pendingProgress)}
+          onCancel={() => {
+            clearProgress(getSessionUid(), pendingQuiz.quizId);
+            startQuiz(pendingQuiz, null);
+          }}
+        />
+      )}
 
       <div className="ph">
         <h2>Assessments</h2>
