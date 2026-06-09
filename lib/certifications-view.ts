@@ -61,6 +61,7 @@ function mapFirestoreStatus(
     case "locked":
       return "Locked";
     case "not_started":
+    case "not_attempted":
        return "Not attempted";
     default:
       return "Locked";

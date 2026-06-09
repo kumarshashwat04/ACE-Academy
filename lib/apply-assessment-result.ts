@@ -56,7 +56,11 @@ export function applyAssessmentResult({
   const passed = assessmentScore >= passingPercentage;
 
   let status: LevelProgress["status"] = currentLevel.status;
-  if (currentLevel.status === "not_started" || currentLevel.status === "in_progress") {
+  if (
+    currentLevel.status === "not_started" ||
+    currentLevel.status === "not_attempted" ||
+    currentLevel.status === "in_progress"
+  ) {
     status = passed ? "completed" : "in_progress";
   }
 

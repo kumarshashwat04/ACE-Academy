@@ -4,7 +4,7 @@
 
 export type LevelProgress = {
   level_name: string;
-  status: "not_started" | "in_progress" | "completed" | "locked";
+  status: "not_started" | "not_attempted" | "in_progress" | "completed" | "locked";
   score: number;
   attemptedTime: number;
   noOfAttempts: number;
@@ -17,21 +17,34 @@ export type CertificationModule = {
   levels: LevelProgress[];
 };
 
-const CERTIFICATION_LEVELS = ["PathFinder", "Navigator", "Grand Master"];
-const STANDARD_MODULES = ["Ranger RTP", "Ranger TTP", "Tools & Techniques"];
+// Per-module level structure. Ranger RTP/TTP follow the gated three-tier path;
+// Tools & Techniques is a single standalone "Tools Specialist" certification.
+const MODULE_LEVELS: { module_name: string; levels: string[] }[] = [
+  { module_name: "Ranger RTP", levels: ["PathFinder", "Navigator", "Grand Master"] },
+  { module_name: "Ranger TTP", levels: ["PathFinder", "Navigator", "Grand Master"] },
+  { module_name: "Tools & Techniques", levels: ["Tools Specialist"] },
+];
 
 const normalizedLevelName = (value: unknown) =>
   String(value || "").trim().toLowerCase().replace(/\s+/g, "");
 
 const normalizedModuleName = (value: unknown) => normalizedLevelName(value);
 
-export function createInitialCertifications(allowedLevel: number): CertificationModule[] {
-  return STANDARD_MODULES.map((moduleName) => ({
-    module_name: moduleName,
-    levels: CERTIFICATION_LEVELS.map((levelName, index) => ({
+function initialStatusForLevel(levelName: string): LevelProgress["status"] {
+  const name = normalizedLevelName(levelName);
+  // Standalone Tools Specialist cert starts open and unattempted.
+  if (name === "toolsspecialist") return "not_attempted";
+  // First tier of a gated path is open; later tiers stay locked until unlocked.
+  if (name === "pathfinder") return "not_started";
+  return "locked";
+}
+
+export function createInitialCertifications(_allowedLevel: number): CertificationModule[] {
+  return MODULE_LEVELS.map(({ module_name, levels }) => ({
+    module_name,
+    levels: levels.map((levelName) => ({
       level_name: levelName,
-      // Updated status logic using normalized level names
-      status: normalizedLevelName(levelName) === "pathfinder" ? "not_started" : "locked",
+      status: initialStatusForLevel(levelName),
       score: 0,
       attemptedTime: 0,
       noOfAttempts: 0,
@@ -46,7 +59,7 @@ export function getCurrentLevelFromCerts(certifications: unknown[]): number {
     return 0;
   }
 
-  const levelOrder = ["pathfinder", "navigator", "grand master"];
+  const levelOrder = ["pathfinder", "navigator", "grandmaster"];
 
   const modules = certifications.filter(
     (cert) => cert && typeof cert === "object" && "module_name" in cert && Array.isArray((cert as any).levels)
@@ -55,14 +68,22 @@ export function getCurrentLevelFromCerts(certifications: unknown[]): number {
   if (modules.length > 0) {
     let maxLevel = 0;
     levelOrder.forEach((levelName, index) => {
-      const allCompleted = modules.every((mod) =>
-        Array.isArray(mod.levels) &&
-        mod.levels.some(
-          (level) =>
-            normalizedLevelName(level.level_name) === levelName &&
-            level.status === "completed"
-        )
+      // Only consider modules that actually contain this tier — Tools & Techniques
+      // has a single standalone level and must not block tiered progression.
+      const modulesWithLevel = modules.filter(
+        (mod) =>
+          Array.isArray(mod.levels) &&
+          mod.levels.some((level) => normalizedLevelName(level.level_name) === levelName)
       );
+      const allCompleted =
+        modulesWithLevel.length > 0 &&
+        modulesWithLevel.every((mod) =>
+          mod.levels.some(
+            (level) =>
+              normalizedLevelName(level.level_name) === levelName &&
+              level.status === "completed"
+          )
+        );
       if (allCompleted) {
         maxLevel = Math.max(maxLevel, index + 1);
       }
