@@ -1337,44 +1337,17 @@ input,textarea,select{font-family:'Plus Jakarta Sans',sans-serif}
           <div class="rank-card-title"><span class="rank-ico">🏢</span> Org. Ranking</div>
           <span class="rank-card-badge global">ORG-WIDE</span>
         </div>
-        <div class="rank-cert-tabs">
-          <div class="rank-cert-tab on">🧭 PathFinder</div>
-          <div class="rank-cert-tab">🗺️ Navigator</div>
-          <div class="rank-cert-tab">🏆 Grand Master</div>
+        <div class="rank-cert-tabs" id="rankOrgProdTabs">
+          <div class="rank-cert-tab on" data-prod="rtp" onclick="setRankProd('org','rtp')">🤖 RTP</div>
+          <div class="rank-cert-tab" data-prod="ttp" onclick="setRankProd('org','ttp')">📦 TTP</div>
+          <div class="rank-cert-tab" data-prod="tools" onclick="setRankProd('org','tools')">🛠️ Tools</div>
         </div>
-        <div class="rank-list">
-          <div class="rank-row is-me">
-            <div class="rank-pos gold">🥇</div>
-            <div class="rank-av" style="background: linear-gradient(135deg, var(--purple), var(--cyan));">AU</div>
-            <div class="rank-name">Admin U.</div>
-            <span class="rank-you-tag">YOU</span>
-            <div class="rank-score">—</div>
-          </div>
-          <div class="rank-row">
-            <div class="rank-pos silver">🥈</div>
-            <div class="rank-av">AK</div>
-            <div class="rank-name">Anish K.</div>
-            <div class="rank-score">—</div>
-          </div>
-          <div class="rank-row">
-            <div class="rank-pos bronze">🥉</div>
-            <div class="rank-av">GB</div>
-            <div class="rank-name">Gorle B.</div>
-            <div class="rank-score">—</div>
-          </div>
-          <div class="rank-row">
-            <div class="rank-pos">4</div>
-            <div class="rank-av">PP</div>
-            <div class="rank-name">Prachi P.</div>
-            <div class="rank-score">—</div>
-          </div>
-          <div class="rank-row">
-            <div class="rank-pos">5</div>
-            <div class="rank-av">SP</div>
-            <div class="rank-name">Sambit P.</div>
-            <div class="rank-score">—</div>
-          </div>
+        <div class="rank-cert-tabs" id="rankOrgLvlTabs">
+          <div class="rank-cert-tab on" data-lvl="pathfinder" onclick="setRankLvl('org','pathfinder')">🧭 PathFinder</div>
+          <div class="rank-cert-tab" data-lvl="navigator" onclick="setRankLvl('org','navigator')">🗺️ Navigator</div>
+          <div class="rank-cert-tab" data-lvl="grandmaster" onclick="setRankLvl('org','grandmaster')">🏆 Grand Master</div>
         </div>
+        <div class="rank-list" id="rankOrgList"></div>
       </div>
 
       <div class="rank-card">
@@ -1383,54 +1356,26 @@ input,textarea,select{font-family:'Plus Jakarta Sans',sans-serif}
           <span class="rank-card-badge team">BY TEAM</span>
         </div>
         
-        <select class="rank-team-select">
+        <select class="rank-team-select" id="rankTeamSelect" onchange="setRankTeam(this.value)">
           <option value="TAC" selected>TAC</option>
           <option value="Change Management">Change Management</option>
           <option value="Client Director">Client Director</option>
           <option value="CEM">CEM</option>
           <option value="CAC">CAC</option>
           <option value="IM">IM</option>
-          <option value="Management">Management</option>
         </select>
-        
-        <div class="rank-cert-tabs">
-          <div class="rank-cert-tab on">🧭 PathFinder</div>
-          <div class="rank-cert-tab">🗺️ Navigator</div>
-          <div class="rank-cert-tab">🏆 Grand Master</div>
+
+        <div class="rank-cert-tabs" id="rankTeamProdTabs">
+          <div class="rank-cert-tab on" data-prod="rtp" onclick="setRankProd('team','rtp')">🤖 RTP</div>
+          <div class="rank-cert-tab" data-prod="ttp" onclick="setRankProd('team','ttp')">📦 TTP</div>
+          <div class="rank-cert-tab" data-prod="tools" onclick="setRankProd('team','tools')">🛠️ Tools</div>
         </div>
-        <div class="rank-list">
-          <div class="rank-row is-me">
-            <div class="rank-pos gold">🥇</div>
-            <div class="rank-av" style="background: linear-gradient(135deg, var(--purple), var(--cyan));">AU</div>
-            <div class="rank-name">Admin U.</div>
-            <span class="rank-you-tag">YOU</span>
-            <div class="rank-score">—</div>
-          </div>
-          <div class="rank-row">
-            <div class="rank-pos silver">🥈</div>
-            <div class="rank-av">AK</div>
-            <div class="rank-name">Anish K.</div>
-            <div class="rank-score">—</div>
-          </div>
-          <div class="rank-row">
-            <div class="rank-pos bronze">🥉</div>
-            <div class="rank-av">GB</div>
-            <div class="rank-name">Gorle B.</div>
-            <div class="rank-score">—</div>
-          </div>
-          <div class="rank-row">
-            <div class="rank-pos">4</div>
-            <div class="rank-av">PP</div>
-            <div class="rank-name">Prachi P.</div>
-            <div class="rank-score">—</div>
-          </div>
-          <div class="rank-row">
-            <div class="rank-pos">5</div>
-            <div class="rank-av">SP</div>
-            <div class="rank-name">Sambit P.</div>
-            <div class="rank-score">—</div>
-          </div>
+        <div class="rank-cert-tabs" id="rankTeamLvlTabs">
+          <div class="rank-cert-tab on" data-lvl="pathfinder" onclick="setRankLvl('team','pathfinder')">🧭 PathFinder</div>
+          <div class="rank-cert-tab" data-lvl="navigator" onclick="setRankLvl('team','navigator')">🗺️ Navigator</div>
+          <div class="rank-cert-tab" data-lvl="grandmaster" onclick="setRankLvl('team','grandmaster')">🏆 Grand Master</div>
         </div>
+        <div class="rank-list" id="rankTeamList"></div>
       </div>
 
     </div>
@@ -2507,6 +2452,144 @@ function rDash(){
   jHtml+=`</div></div>`;
   });
   document.getElementById('dashJourney').innerHTML=jHtml;
+  rRankings();
+}
+
+// ════════════════════════════════════════
+// RANKING (dashboard leaderboard cards)
+// ════════════════════════════════════════
+const RANK_STATE={
+  org:  {prod:'rtp', lvl:'pathfinder'},
+  team: {prod:'rtp', lvl:'pathfinder', team:'TAC'}
+};
+let RANK_USERS=null;        // cache of fetched users
+let RANK_TEAM_TOUCHED=false; // true once the user changes the team <select>
+
+function rankInitials(name){
+  return (String(name||'').split(/\s+/).filter(Boolean).map(p=>p[0]).join('').slice(0,2)||'?').toUpperCase();
+}
+
+async function fetchRankUsers(){
+  if(RANK_USERS) return RANK_USERS;
+  try{
+    const res=await fetch('/api/firebase/rankings');
+    if(!res.ok) throw new Error('rankings fetch failed: '+res.status);
+    const data=await res.json();
+    RANK_USERS=Array.isArray(data.users)?data.users:[];
+  }catch(err){
+    console.error('Failed to load rankings:',err);
+    RANK_USERS=[];
+  }
+  return RANK_USERS;
+}
+
+// Filter to users who have COMPLETED the given product+level, sort by score desc
+// then name A→Z (alphabetical tie-break), and return the top 5.
+function buildLeaderboard(users, prodId, levelCertId, teamFilter){
+  const prod=PRODUCTS.find(p=>p.id===prodId);
+  if(!prod) return [];
+  const moduleName=prod.name;
+  const levelName=CMETA[levelCertId]?.name||levelCertId;
+  const meId=CU?CU.id:null;
+  const rows=[];
+  users.forEach(u=>{
+    if(teamFilter && u.team!==teamFilter) return;
+    const certs=Array.isArray(u.certifications)?u.certifications:[];
+    const lvl=findCertLevel(certs, moduleName, levelName);
+    if(!lvl || lvl.status!=='completed') return;
+    rows.push({
+      name:u.name||'Unknown',
+      av:u.av||rankInitials(u.name),
+      score:typeof lvl.score==='number'?lvl.score:0,
+      isMe:Boolean(meId && u.uid===meId)
+    });
+  });
+  rows.sort((a,b)=> (b.score-a.score) || a.name.localeCompare(b.name));
+  return rows.slice(0,5);
+}
+
+function rankRowHtml(row, idx){
+  const pos=idx+1;
+  const medal=pos===1?'🥇':pos===2?'🥈':pos===3?'🥉':String(pos);
+  const posClass=pos===1?'gold':pos===2?'silver':pos===3?'bronze':'';
+  const avStyle=row.isMe?' style="background: linear-gradient(135deg, var(--purple), var(--cyan));"':'';
+  const youTag=row.isMe?'<span class="rank-you-tag">YOU</span>':'';
+  return `<div class="rank-row ${row.isMe?'is-me':''}">
+    <div class="rank-pos ${posClass}">${medal}</div>
+    <div class="rank-av"${avStyle}>${row.av}</div>
+    <div class="rank-name">${row.name}</div>
+    ${youTag}
+    <div class="rank-score">${row.score}%</div>
+  </div>`;
+}
+
+function renderRankList(containerId, rows){
+  const el=document.getElementById(containerId);
+  if(!el) return;
+  if(!rows.length){
+    el.innerHTML='<div class="rank-empty" style="padding:18px 4px;color:var(--muted,#8b93a7);font-size:13px;text-align:center;">No one has completed this level yet.</div>';
+    return;
+  }
+  el.innerHTML=rows.map(rankRowHtml).join('');
+}
+
+// Reflect current state on the tab UI; hide level tabs for the single-level Tools track.
+function syncRankTabsUI(card){
+  const st=RANK_STATE[card];
+  const cap=card==='org'?'Org':'Team';
+  const prodTabs=document.getElementById('rank'+cap+'ProdTabs');
+  const lvlTabs=document.getElementById('rank'+cap+'LvlTabs');
+  if(prodTabs){
+    prodTabs.querySelectorAll('.rank-cert-tab').forEach(t=>{
+      t.classList.toggle('on', t.dataset.prod===st.prod);
+    });
+  }
+  if(lvlTabs){
+    if(st.prod==='tools'){
+      lvlTabs.style.display='none';
+    }else{
+      lvlTabs.style.display='';
+      lvlTabs.querySelectorAll('.rank-cert-tab').forEach(t=>{
+        t.classList.toggle('on', t.dataset.lvl===st.lvl);
+      });
+    }
+  }
+}
+
+function setRankProd(card, prodId){
+  const st=RANK_STATE[card];
+  st.prod=prodId;
+  // Tools is a single standalone cert; pin its level and collapse the level tabs.
+  if(prodId==='tools') st.lvl='toolscert';
+  else if(st.lvl==='toolscert') st.lvl='pathfinder';
+  syncRankTabsUI(card);
+  rRankings();
+}
+
+function setRankLvl(card, levelCertId){
+  RANK_STATE[card].lvl=levelCertId;
+  syncRankTabsUI(card);
+  rRankings();
+}
+
+function setRankTeam(team){
+  RANK_TEAM_TOUCHED=true;
+  RANK_STATE.team.team=team;
+  rRankings();
+}
+
+async function rRankings(){
+  // Default the team card to the current user's team until they pick another.
+  if(!RANK_TEAM_TOUCHED && CU && CU.team){
+    RANK_STATE.team.team=CU.team;
+    const sel=document.getElementById('rankTeamSelect');
+    if(sel) sel.value=CU.team;
+  }
+  syncRankTabsUI('org');
+  syncRankTabsUI('team');
+  const users=await fetchRankUsers();
+  renderRankList('rankOrgList', buildLeaderboard(users, RANK_STATE.org.prod, RANK_STATE.org.lvl, null));
+  renderRankList('rankTeamList', buildLeaderboard(users, RANK_STATE.team.prod, RANK_STATE.team.lvl, RANK_STATE.team.team));
 }
 
 // ════════════════════════════════════════

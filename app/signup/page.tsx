@@ -19,6 +19,7 @@ export default function SignupPage() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
+  const [registered, setRegistered] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -105,8 +106,11 @@ export default function SignupPage() {
       setEmail("");
       setPassword("");
       setTeam(TEAM_OPTIONS[0]);
+      setRegistered(true);
 
-      router.push("/");
+      setTimeout(() => {
+        router.push("/");
+      }, 2500);
     } catch (caughtError) {
       const message =
         caughtError instanceof Error
@@ -159,6 +163,49 @@ export default function SignupPage() {
 
         {/* Right Section: Form Card */}
         <div className="login-card" style={{ background: "#161b27", borderRadius: "20px", border: "1px solid rgba(255,255,255,0.08)", padding: "40px", flex: "1 1 420px", maxWidth: "460px", boxShadow: "0 20px 40px rgba(0,0,0,0.3)" }}>
+          {registered ? (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "16px 0" }}>
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  height: "72px",
+                  width: "72px",
+                  borderRadius: "50%",
+                  background: "rgba(16,185,129,0.12)",
+                  border: "2px solid rgba(16,185,129,0.4)",
+                  marginBottom: "24px",
+                }}
+              >
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>
+              <div style={{ fontSize: "24px", fontWeight: 800, color: "#ffffff", marginBottom: "10px" }}>
+                Sign In done
+              </div>
+              <p style={{ fontSize: "14px", color: "#a7f3d0", marginBottom: "8px" }}>
+                Your account has been registered successfully.
+              </p>
+              <p style={{ fontSize: "13px", color: "#8a95a8", display: "inline-flex", alignItems: "center", gap: "8px", marginTop: "8px" }}>
+                <span
+                  style={{
+                    display: "inline-block",
+                    height: "14px",
+                    width: "14px",
+                    border: "2px solid rgba(167,139,250,0.4)",
+                    borderTopColor: "#a78bfa",
+                    borderRadius: "50%",
+                    animation: "spin 0.8s linear infinite",
+                  }}
+                />
+                Redirecting to login page...
+              </p>
+              <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+            </div>
+          ) : (
+          <>
           {error ? (
             <div className="login-err" style={{ display: "block", marginBottom: "16px" }}>{error}</div>
           ) : null}
@@ -252,6 +299,8 @@ export default function SignupPage() {
               Back to sign in
             </Link>
           </div>
+          </>
+          )}
         </div>
       </div>
     </main>

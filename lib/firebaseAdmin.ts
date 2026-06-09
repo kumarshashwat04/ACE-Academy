@@ -1,5 +1,6 @@
 import { cert, getApps, initializeApp, type App } from "firebase-admin/app";
 import { getFirestore, type Firestore } from "firebase-admin/firestore";
+import { getAuth, type Auth } from "firebase-admin/auth";
 
 type ServiceAccountEnv = {
   projectId: string;
@@ -39,4 +40,9 @@ function getFirebaseAdminApp(): App {
 export function getAdminDb(): Firestore {
   const app = getFirebaseAdminApp();
   return getFirestore(app);
+}
+
+export function getAdminAuth(): Auth {
+  const app = getFirebaseAdminApp();
+  return getAuth(app);
 }
