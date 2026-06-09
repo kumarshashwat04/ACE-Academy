@@ -2260,7 +2260,10 @@ const restoredUser=loadSavedSession();
 if(restoredUser){
   CU=restoredUser;
   document.getElementById('loginScreen').style.display='none';
-  initApp();
+  // Defer boot until the whole script has executed, otherwise rDash()→rRankings()
+  // runs before RANK_STATE/RANK_TEAM_TOUCHED (declared later) are initialized,
+  // throwing a TDZ ReferenceError that silently leaves the ranking lists empty.
+  setTimeout(initApp,0);
 }
 
 function initApp(){
