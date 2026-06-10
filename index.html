@@ -2513,6 +2513,8 @@ function buildLeaderboard(users, prodId, levelCertId, teamFilter){
   const meId=CU?CU.id:null;
   const rows=[];
   users.forEach(u=>{
+    // Admins and the Management team are excluded from all rankings.
+    if(u.role==='admin' || u.team==='Management') return;
     if(teamFilter && u.team!==teamFilter) return;
     const certs=Array.isArray(u.certifications)?u.certifications:[];
     const lvl=findCertLevel(certs, moduleName, levelName);

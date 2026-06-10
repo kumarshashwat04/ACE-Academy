@@ -18,6 +18,7 @@ export async function GET() {
         uid: doc.id,
         name: typeof data.name === "string" ? data.name : "",
         team: typeof data.team === "string" ? data.team : "",
+        role: data.role === "admin" ? "admin" : "learner",
         av: typeof data.av === "string" ? data.av : "",
         certifications: Array.isArray(data.certifications) ? data.certifications : [],
       };

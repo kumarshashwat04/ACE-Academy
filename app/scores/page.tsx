@@ -14,6 +14,9 @@ export default function AllScores() {
   const [users, setUsers] = useState<ScoreSourceUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [teamFilter, setTeamFilter] = useState("all");
+  const [sortOrder, setSortOrder] = useState<"latest" | "oldest">("latest");
 
   useEffect(() => {
     async function loadUsers() {
@@ -34,7 +37,25 @@ export default function AllScores() {
     loadUsers();
   }, []);
 
-  const rows: ScoreRow[] = useMemo(() => deriveScoreRows(users), [users]);
+  const allRows: ScoreRow[] = useMemo(() => deriveScoreRows(users), [users]);
+
+  const teams = ['TAC', 'Change Management', 'Client Director', 'CEM', 'CAC', 'IM'];
+
+  const rows: ScoreRow[] = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    const filtered = allRows.filter((row) => {
+      if (teamFilter !== "all" && row.team !== teamFilter) return false;
+      if (!query) return true;
+      return [row.name, row.team, row.productName, row.certName]
+        .some((field) => field.toLowerCase().includes(query));
+    });
+
+    return [...filtered].sort((a, b) => {
+      const aTime = a.lastAttempt ? new Date(a.lastAttempt).getTime() : 0;
+      const bTime = b.lastAttempt ? new Date(b.lastAttempt).getTime() : 0;
+      return sortOrder === "latest" ? bTime - aTime : aTime - bTime;
+    });
+  }, [allRows, search, teamFilter, sortOrder]);
 
   const handleExportCsv = () => {
     const csv = scoreRowsToCsv(rows);
@@ -78,8 +99,74 @@ export default function AllScores() {
           </p>
         </div>
 
-        {/* Export */}
-        <div style={{ marginBottom: "20px" }}>
+        {/* Controls */}
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: "12px",
+            alignItems: "center",
+            marginBottom: "20px",
+          }}
+        >
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="🔍 Search name, team, product..."
+            style={{
+              flex: "1 1 240px",
+              minWidth: "200px",
+              padding: "10px 14px",
+              fontSize: "14px",
+              color: "var(--text1)",
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+              borderRadius: "8px",
+              outline: "none",
+            }}
+          />
+
+          <select
+            value={teamFilter}
+            onChange={(e) => setTeamFilter(e.target.value)}
+            style={{
+              padding: "10px 14px",
+              fontSize: "14px",
+              color: "var(--text1)",
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+              borderRadius: "8px",
+              outline: "none",
+              cursor: "pointer",
+            }}
+          >
+            <option value="all">All teams</option>
+            {teams.map((team) => (
+              <option key={team} value={team}>
+                {team}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value as "latest" | "oldest")}
+            style={{
+              padding: "10px 14px",
+              fontSize: "14px",
+              color: "var(--text1)",
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+              borderRadius: "8px",
+              outline: "none",
+              cursor: "pointer",
+            }}
+          >
+            <option value="latest">Last attempt: Latest first</option>
+            <option value="oldest">Last attempt: Oldest first</option>
+          </select>
+
           <button
             className="btn-add"
             onClick={handleExportCsv}
@@ -90,6 +177,7 @@ export default function AllScores() {
               color: "#fff",
               opacity: loading || rows.length === 0 ? 0.5 : 1,
               cursor: loading || rows.length === 0 ? "not-allowed" : "pointer",
+              marginLeft: "auto",
             }}
           >
             ⬇ Export CSV
@@ -128,7 +216,9 @@ export default function AllScores() {
                 ) : rows.length === 0 ? (
                   <tr>
                     <td colSpan={8} style={{ textAlign: "center", padding: "32px", color: "var(--text3)" }}>
-                      No assessment data yet.
+                      {allRows.length === 0
+                        ? "No assessment data yet."
+                        : "No results match your search or filters."}
                     </td>
                   </tr>
                 ) : (
