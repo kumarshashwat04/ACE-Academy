@@ -102,14 +102,7 @@ export default function GlobalCoursePage() {
                     </div>
                     
                     <div className="ace-trigger-right">
-                      {isDone && (
-                        <span className="ace-tick-badge" title="Completed">
-                          <svg className="icon-tick" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                          </svg>
-                          Done
-                        </span>
-                      )}
+                     
 
                       <svg 
                         className={`ace-caret-icon ${isOpen ? "rotate-icon" : ""}`} 
