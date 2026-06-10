@@ -146,10 +146,10 @@ export default function CertificationsPage() {
 
         /* State 1: Locked or Not Attempted (Subdued silver metallic sheen mask) */
         .badge-card.is-subdued-icon .badge-naked-icon {
-          filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.45)) grayscale(0.2) brightness(0.9);
-          background: linear-gradient(135deg, #ffffff 30%, #94a3b8 60%, #ffffff 85%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
+          filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55)) brightness(1.05);
+          background: none;
+          -webkit-background-clip: initial;
+          -webkit-text-fill-color: initial;
         }
 
         /* State 2: Passed (Unmasked - Vivid full original color visibility with crisp backing drop shadow) */
