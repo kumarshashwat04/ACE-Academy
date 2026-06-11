@@ -8,6 +8,7 @@ import { auth } from "@/lib/firebase";
 import { createInitialCertifications } from "@/lib/certifications";
 import { greyOrangeEmailErrorMessage, isGreyOrangeEmail, normalizeEmail } from "@/lib/email-validation";
 import PasswordField from "@/components/auth/PasswordField";
+import { apiUrl } from "@/lib/api";
 const TEAM_OPTIONS = ['TAC','Change Management','Client Director','CEM','CAC','IM','Management'];
 
 export default function SignupPage() {
@@ -55,12 +56,12 @@ export default function SignupPage() {
         displayName: name.trim(),
       });
 
-      const teamPolicyResponse = await fetch(`/api/firebase/team-policy?team=${encodeURIComponent(team)}`);
+      const teamPolicyResponse = await fetch(apiUrl(`/api/firebase/team-policy?team=${encodeURIComponent(team)}`));
       const teamPolicy = teamPolicyResponse.ok
         ? await teamPolicyResponse.json()
         : { allowedLevel: 0 };
 
-      const response = await fetch("/api/firebase/store", {
+      const response = await fetch(apiUrl("/api/firebase/store"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

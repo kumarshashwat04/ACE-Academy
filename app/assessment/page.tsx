@@ -7,6 +7,7 @@ import type { CertificationModule } from "@/lib/certifications";
 import { getSessionUid, syncSessionFromProfile } from "@/lib/session";
 import { fetchUserProfile } from "@/lib/user-profile";
 import AppShell from "../../components/AppShell";
+import { apiUrl } from "@/lib/api";
 
 const COURSE_TABS = [
   { id: "rtp", name: "Ranger RTP", icon: "🤖", cssClass: "rtp" },
@@ -171,7 +172,7 @@ const handleLevelClick = async (levelId: string) => {
     
     try {
       // Both standard tracks and the tools track will now cleanly use a standard GET request relatively
-      const response = await fetch(`/api/firebase/assessments?quizId=${targetQuizId}`);
+      const response = await fetch(apiUrl(`/api/firebase/assessments?quizId=${targetQuizId}`));
 
       if (response.ok) {
         const data: QuizData = await response.json();
@@ -256,7 +257,7 @@ const handleLevelClick = async (levelId: string) => {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/firebase/assessments/submit", {
+      const response = await fetch(apiUrl("/api/firebase/assessments/submit"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

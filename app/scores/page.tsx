@@ -1,6 +1,7 @@
 "use client";
 
 import AppShell from '@/components/AppShell';
+import { apiUrl } from '@/lib/api';
 import React, { useEffect, useMemo, useState } from "react";
 import {
   deriveScoreRows,
@@ -23,7 +24,7 @@ export default function AllScores() {
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch("/api/firebase/users");
+        const response = await fetch(apiUrl("/api/firebase/users"));
         if (!response.ok) throw new Error("Failed to load score data.");
         const data = await response.json();
         setUsers(Array.isArray(data.users) ? data.users : []);

@@ -529,6 +529,7 @@
 
 import { useState, useEffect } from "react";
 import AppShell from "../../components/AppShell";
+import { apiUrl } from "@/lib/api";
 
 const COURSE_TABS = [
   { id: "rtp", name: "Ranger RTP", icon: "🤖", cssClass: "rtp" },
@@ -587,7 +588,7 @@ export default function SyllabusPage() {
     async function fetchSyllabusData() {
       setIsLoading(true);
       try {
-        const response = await fetch(`/api/firebase/syllabus/${activeId}`);
+        const response = await fetch(apiUrl(`/api/firebase/syllabus/${activeId}`));
         if (response.ok) {
           const data: SyllabusData = await response.json();
           setSyllabus(data);
@@ -671,7 +672,7 @@ export default function SyllabusPage() {
 
   // 3. Existing database sync backend fetch
   try {
-    await fetch(`/api/firebase/user/progress/${activeId}`, {
+    await fetch(apiUrl(`/api/firebase/user/progress/${activeId}`), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ moduleKey: moduleCode, level: activeLevel, completed: nextState }),

@@ -1,4 +1,5 @@
 import type { CertificationModule } from "@/lib/certifications";
+import { apiUrl } from "@/lib/api";
 
 /** Firestore timestamp or ISO string from signup */
 export type FirestoreTimestamp =
@@ -48,7 +49,7 @@ export async function fetchUserProfile(uid: string): Promise<{
   profile: FirestoreUserProfile | null;
   error: "profile_not_found" | "fetch_failed" | null;
 }> {
-  const response = await fetch(`/api/firebase/user/${encodeURIComponent(uid)}`);
+  const response = await fetch(apiUrl(`/api/firebase/user/${encodeURIComponent(uid)}`));
 
   if (response.status === 404) {
     return { profile: null, error: "profile_not_found" };

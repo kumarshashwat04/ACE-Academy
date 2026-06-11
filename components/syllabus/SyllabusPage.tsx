@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { CMETA, PERSONA_CERTS, type CertId } from "@/lib/academy-data";
 import { CURRICULUM, type ProductCurriculum } from "@/lib/curriculum";
 import type { User } from "@/lib/auth";
+import { apiUrl } from "@/lib/api";
 
 type DoneRecord = Record<string, Record<string, string>>;
 
@@ -59,7 +60,7 @@ export default function SyllabusPage({ user }: SyllabusPageProps) {
 
     // 2. Sync to backend database
     try {
-      const response = await fetch("/api/firebase/user-progress", {
+      const response = await fetch(apiUrl("/api/firebase/user-progress"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

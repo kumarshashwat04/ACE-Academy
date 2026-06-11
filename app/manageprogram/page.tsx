@@ -3,6 +3,7 @@
 import AppShell from '@/components/AppShell';
 import React, { useState, useEffect } from 'react';
 import { getCertificationsEarnedCount } from '@/lib/certifications';
+import { apiUrl } from '@/lib/api';
 
 // Team options available when creating/editing a user (mirrors signup).
 const TEAM_OPTIONS = ['TAC', 'Change Management', 'Client Director', 'CEM', 'CAC', 'IM', 'Management'];
@@ -198,7 +199,7 @@ export default function ManageProgram() {
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch(`/api/firebase/assessments?quizId=${activeQuizId}`);
+        const response = await fetch(apiUrl(`/api/firebase/assessments?quizId=${activeQuizId}`));
         if (!response.ok) {
           throw new Error(`Failed to load data for query identity key: ${activeQuizId}`);
         }
@@ -223,7 +224,7 @@ export default function ManageProgram() {
       if (activeTab !== 'syllabus') return;
       setSylLoading(true);
       try {
-        const response = await fetch(`/api/firebase/syllabus/${admProd}`);
+        const response = await fetch(apiUrl(`/api/firebase/syllabus/${admProd}`));
         if (!response.ok) throw new Error("Failed to pull dynamic backend syllabus schema.");
         const data: AdminSyllabusPayload = await response.json();
         setCurrentSyllabusData(data);
@@ -299,7 +300,7 @@ export default function ManageProgram() {
     setError(null);
 
     try {
-      const response = await fetch(`/api/firebase/assessments/${payload.quizId}`, {
+      const response = await fetch(apiUrl(`/api/firebase/assessments/${payload.quizId}`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -360,7 +361,7 @@ export default function ManageProgram() {
         setLoading(true);
 
         try {
-          const response = await fetch(`/api/firebase/assessments/${activeQuizId}`, {
+          const response = await fetch(apiUrl(`/api/firebase/assessments/${activeQuizId}`), {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -410,7 +411,7 @@ export default function ManageProgram() {
     setError(null);
 
     try {
-      const response = await fetch(`/api/firebase/assessments/${activeQuizId}`, {
+      const response = await fetch(apiUrl(`/api/firebase/assessments/${activeQuizId}`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -501,7 +502,7 @@ export default function ManageProgram() {
     };
 
     try {
-      const response = await fetch('/api/firebase/syllabus', {
+      const response = await fetch(apiUrl('/api/firebase/syllabus'), {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json' 
@@ -585,7 +586,7 @@ export default function ManageProgram() {
     };
 
     try {
-      const response = await fetch('/api/firebase/syllabus', {
+      const response = await fetch(apiUrl('/api/firebase/syllabus'), {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json' 
@@ -623,7 +624,7 @@ export default function ManageProgram() {
     setUsersLoading(true);
     setUsersError(null);
     try {
-      const response = await fetch('/api/firebase/users');
+      const response = await fetch(apiUrl('/api/firebase/users'));
       if (!response.ok) throw new Error('Failed to load the user registry.');
       const data = await response.json();
       setUsers(Array.isArray(data.users) ? data.users : []);
@@ -684,7 +685,7 @@ export default function ManageProgram() {
     try {
       let response: Response;
       if (userModalMode === 'add') {
-        response = await fetch('/api/firebase/users', {
+        response = await fetch(apiUrl('/api/firebase/users'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -696,7 +697,7 @@ export default function ManageProgram() {
           }),
         });
       } else {
-        response = await fetch(`/api/firebase/user/${editingUid}`, {
+        response = await fetch(apiUrl(`/api/firebase/user/${editingUid}`), {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name: uName.trim(), team: uTeam, role: uRole }),
@@ -726,7 +727,7 @@ export default function ManageProgram() {
       onConfirm: async () => {
         setConfirmDialog(prev => ({ ...prev, isOpen: false }));
         try {
-          const response = await fetch(`/api/firebase/user/${user.uid}`, { method: 'DELETE' });
+          const response = await fetch(apiUrl(`/api/firebase/user/${user.uid}`), { method: 'DELETE' });
           const responseData = await response.json().catch(() => ({}));
           if (!response.ok) {
             throw new Error(responseData.error || 'Failed to delete user.');

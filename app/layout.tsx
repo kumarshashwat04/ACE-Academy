@@ -15,9 +15,9 @@ const jetBrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "ACE Academy · GreyOrange",
   description: "ACE Academy",
-  icons: {
-    icon: '/favicon.png'
-  },
+  // icons: {
+  //   icon: '/favicon.png'
+  // },
 };
 
 export default function RootLayout({

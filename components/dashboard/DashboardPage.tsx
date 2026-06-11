@@ -10,6 +10,7 @@ import {
   type CertificationModule,
 } from "@/lib/certifications";
 import type { DoneRecord, ProgressSnapshot } from "@/lib/progress";
+import { apiUrl } from "@/lib/api";
 
 type DashboardPageProps = {
   user: User;
@@ -31,7 +32,7 @@ export default function DashboardPage({ user }: DashboardPageProps) {
 
     async function loadProgress() {
       try {
-        const response = await fetch(`/api/firebase/user-progress/${encodeURIComponent(user.id)}`);
+        const response = await fetch(apiUrl(`/api/firebase/user-progress/${encodeURIComponent(user.id)}`));
 
         if (!response.ok) {
           throw new Error("Failed to fetch progress.");
