@@ -2331,8 +2331,8 @@ function goPage(p){
 }
 ////
 function routeTo(path) {
-    const cleanPath = path.startsWith('/ace_academy/') ? path : '/' + path;
-    
+    const cleanPath = path.startsWith('/ace_academy/') ? path : '/ace_academy/' + path.replace(/^\//, '');
+
     // 2. Changes the URL without reloading the page
     window.history.pushState({}, '', cleanPath);
     
@@ -2462,7 +2462,7 @@ function rDash(){
 
   // ── CERTIFICATION JOURNEY ──
   window.routeTo = function(path) {
-    const cleanPath = path.startsWith('/ace_academy/') ? path : '/' + path;
+    const cleanPath = path.startsWith('/ace_academy/') ? path : '/ace_academy/' + path.replace(/^\//, '');
     window.parent.location.href = cleanPath;
 };
   let jHtml='<div class="ph" style="margin-bottom:14px;margin-top:8px"><h2 style="font-size:16px;font-weight:700">Certification Journey</h2></div>';
