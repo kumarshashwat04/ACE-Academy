@@ -2343,6 +2343,21 @@ function routeTo(path) {
 // ════════════════════════════════════════
 // DASHBOARD
 // ════════════════════════════════════════
+
+function animateCount(el,target,duration=900){
+  if(!el) return;
+  target=Number(target)||0;
+  const start=performance.now();
+  function frame(now){
+    const t=Math.min((now-start)/duration,1);
+    const eased=1-Math.pow(1-t,3); // ease-out cubic
+    el.textContent=Math.round(eased*target);
+    if(t<1) requestAnimationFrame(frame);
+    else el.textContent=target;
+  }
+  requestAnimationFrame(frame);
+}
+
 function rDash(){
   document.getElementById('greeting').textContent='Welcome back, '+CU.name.split(' ')[0]+' 👋';
   const allowed=PERSONA_CERTS[CU.team]||PERSONA_CERTS['default'];
@@ -2383,7 +2398,7 @@ function rDash(){
   });
   const coveredCount=Object.keys(userDone).length;
 
-  document.getElementById('sTot').textContent=totalMods;
+  animateCount(document.getElementById('sTot'),totalMods);
   document.getElementById('sCovered').textContent=coveredCount;
   document.getElementById('sEarned').textContent=earnedCount;
   document.getElementById('sBest').textContent=best;
