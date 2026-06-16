@@ -810,16 +810,18 @@ export default function SyllabusPage() {
                             {mod.resources && mod.resources.length > 0 && mod.resources.map((res, rIdx) => {
                               const isVideo = res.type.toLowerCase() === "video";
                               return (
-                                <a
-                                  key={rIdx}
-                                  href={res.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className={`mod-link ${isVideo ? "vid" : "doc"}`}
+                                !isVideo ? (
+                                  <a
+                                    key={rIdx}
+                                    href={res.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={`mod-link ${isVideo ? "vid" : "doc"}`}
                                 >
                                   <span>{isVideo ? "▶" : "📄"}</span>
                                   {res.label}
                                 </a>
+                              ) : null
                               );
                             })}
                           </div>
