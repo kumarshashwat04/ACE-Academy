@@ -1313,3 +1313,19 @@ z/* Container alignment */
     padding: 1rem;
   }
 }
+/* ──────── GLOBAL BACKGROUND FX (particles + cursor glow) ──────── */
+#particleCanvas{position:fixed;inset:0;pointer-events:none;z-index:2;opacity:.75}
+.cursor-glow{
+  position:fixed;width:300px;height:300px;border-radius:50%;
+  background:radial-gradient(circle,rgba(109,82,232,.06) 0%,transparent 70%);
+  pointer-events:none;z-index:0;
+  top:0;left:0;
+  transform:translate(-50%,-50%);
+  transition:left 0.12s ease,top 0.12s ease,opacity 0.3s ease;
+  mix-blend-mode:screen;
+  will-change:transform
+}
+
+/* Keep app chrome above the particle canvas (z-index:2) */
+.sidebar{position:relative;z-index:3}
+.topbar{position:relative;z-index:200}
