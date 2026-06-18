@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 // 1. Bring in your session loader function (or import it if it's in another file)
 function loadSavedSession() {
@@ -28,41 +29,50 @@ interface AppShellProps {
   currentTab: string;
 }
 
+const DEFAULT_USER: UserType = {
+  name: "Anish Kumar",
+  team: "TAC",
+  role: "learner",
+  av: "AK",
+};
+
+function normalizeUser(savedUser: { name?: string; team?: string; role?: string; av?: string }): UserType {
+  return {
+    name: savedUser.name || DEFAULT_USER.name,
+    team: savedUser.team || DEFAULT_USER.team,
+    role: savedUser.role === "admin" ? "admin" : "learner",
+    // Fallback initials generator if 'av' doesn't exist in localstorage
+    av: savedUser.av || (savedUser.name ? savedUser.name.split(" ").map((n: string) => n[0]).join("").toUpperCase() : "AK"),
+  };
+}
+
+// Each routed page renders its own <AppShell>, so the shell remounts on every
+// navigation. Caching the resolved user at module scope lets a remount paint the
+// correct user/admin state in the first frame instead of flashing the default
+// user and popping the Admin section in after the effect runs.
+let cachedUser: UserType | null = null;
+
 export default function AppShell({ children, currentTab }: AppShellProps) {
   const router = useRouter();
-  
-  // 2. Initialize state with your fallback default user
-  const [user, setUser] = useState<UserType>({
-    name: "Anish Kumar",
-    team: "TAC",
-    role: "learner",
-    av: "AK"
-  });
+
+  // 2. Initialize from the cached session (falls back to default on first load / SSR)
+  const [user, setUser] = useState<UserType>(cachedUser ?? DEFAULT_USER);
 
   // 3. Load the session safely after mounting on the client side
   useEffect(() => {
     const savedUser = loadSavedSession();
     if (savedUser) {
-      setUser({
-        name: savedUser.name || "Anish Kumar",
-        team: savedUser.team || "TAC",
-        role: savedUser.role === "admin" ? "admin" : "learner",
-        // Fallback initials generator if 'av' doesn't exist in localstorage
-        av: savedUser.av || (savedUser.name ? savedUser.name.split(" ").map((n: string) => n[0]).join("").toUpperCase() : "AK")
-      });
+      const normalized = normalizeUser(savedUser);
+      cachedUser = normalized;
+      setUser(normalized);
     }
   }, []);
 
-  const handleNavigation = (tabName: string) => {
-    if (tabName === "dash") {
-      router.push("/");
-    } else {
-      router.push(`/${tabName}`);
-    }
-  };
+  const hrefFor = (tabName: string) => (tabName === "dash" ? "/" : `/${tabName}`);
 
   const handleLogout = () => {
     // 4. Clear localStorage on logout
+    cachedUser = null;
     localStorage.removeItem('ace2_session_user');
     localStorage.clear();
     console.log("Signing out user...");
@@ -84,7 +94,7 @@ export default function AppShell({ children, currentTab }: AppShellProps) {
           <div className="tb-divider"></div>
           <span className="tb-tag">Automation Certification &amp; Excellence</span>
         </div>
-        
+
         <div className="tb-right">
           <div className="user-chip">
             <div className="u-av" id="uAv">{user.av}</div>
@@ -102,33 +112,33 @@ export default function AppShell({ children, currentTab }: AppShellProps) {
         {/* ─── SIDEBAR ─── */}
         <div className="sidebar" id="sidebar">
           <div className="sid-label">Learn</div>
-          
-          <div className={`nav ${currentTab === "dash" ? "on" : ""}`} onClick={() => handleNavigation("dash")}>
+
+          <Link href={hrefFor("dash")} prefetch className={`nav ${currentTab === "dash" ? "on" : ""}`}>
             <span className="nav-ico">⊞</span>Dashboard
-          </div>
-          <div className={`nav ${currentTab === "syllabus" ? "on" : ""}`} onClick={() => handleNavigation("syllabus")}>
+          </Link>
+          <Link href={hrefFor("syllabus")} prefetch className={`nav ${currentTab === "syllabus" ? "on" : ""}`}>
             <span className="nav-ico">◈</span>Syllabus
-          </div>
-          <div className={`nav ${currentTab === "assessment" ? "on" : ""}`} onClick={() => handleNavigation("assessment")}>
+          </Link>
+          <Link href={hrefFor("assessment")} prefetch className={`nav ${currentTab === "assessment" ? "on" : ""}`}>
             <span className="nav-ico">✎</span>Assessments
-          </div>
-          <div className={`nav ${currentTab === "certifications" ? "on" : ""}`} onClick={() => handleNavigation("certifications")}>
+          </Link>
+          <Link href={hrefFor("certifications")} prefetch className={`nav ${currentTab === "certifications" ? "on" : ""}`}>
             <span className="nav-ico">◎</span>My Certifications
-          </div>
-           <div className={`nav ${currentTab === "globalCourse" ? "on" : ""}`} onClick={() => handleNavigation("globalCourse")}>
+          </Link>
+          <Link href={hrefFor("globalCourse")} prefetch className={`nav ${currentTab === "globalCourse" ? "on" : ""}`}>
             <span className="nav-ico">◎</span>Global Course
-          </div>
+          </Link>
 
           {/* Conditional Admin Sidebar Rendering */}
           {user.role === "admin" && (
             <>
               <div className="sid-label">Admin</div>
-              <div className={`nav ${currentTab === "manageprogram" ? "on" : ""}`} onClick={() => handleNavigation("manageprogram")}>
+              <Link href={hrefFor("manageprogram")} prefetch className={`nav ${currentTab === "manageprogram" ? "on" : ""}`}>
                 <span className="nav-ico">⚙</span>Manage Program
-              </div>
-              <div className={`nav ${currentTab === "scores" ? "on" : ""}`} onClick={() => handleNavigation("scores")}>
+              </Link>
+              <Link href={hrefFor("scores")} prefetch className={`nav ${currentTab === "scores" ? "on" : ""}`}>
                 <span className="nav-ico">≡</span>All Scores
-              </div>
+              </Link>
             </>
           )}
         </div>
