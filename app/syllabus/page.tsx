@@ -755,6 +755,9 @@ export default function SyllabusPage() {
                   const currentSegmentKey = `${activeId}-${activeLevel}`;
                   const isCompleted = !!completedModules[`${currentSegmentKey}::${moduleUniqueKey}`];
 
+                  // Modules flagged as "coming soon" should have their resource links disabled
+                  const isComingSoon = (mod.description || "").toLowerCase().includes("coming soon");
+
                   return (
                     <div
                       key={moduleUniqueKey}
@@ -778,8 +781,20 @@ export default function SyllabusPage() {
                         <span className="mod-title" style={{ flexGrow: 1 }}>{mod.title}</span>
                         
                         {isCompleted && (
-                          <span style={{ color: "#10b981", marginRight: "8px", fontSize: "1.0rem" }}>
-                            ✓ Done
+                          <span style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "4px",
+                            color: "#4ade80",
+                            background: "rgba(74, 222, 128, 0.12)",
+                            border: "1px solid rgba(74, 222, 128, 0.35)",
+                            padding: "2px 10px",
+                            borderRadius: "12px",
+                            marginRight: "8px",
+                            fontSize: "0.8rem",
+                            fontWeight: 600,
+                          }}>
+                            <span style={{ fontSize: "0.9rem" }}>✓</span> Done
                           </span>
                         )}
                         
@@ -811,16 +826,32 @@ export default function SyllabusPage() {
                               const isVideo = res.type.toLowerCase() === "video";
                               return (
                                 !isVideo ? (
-                                  <a
-                                    key={rIdx}
-                                    href={res.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className={`mod-link ${isVideo ? "vid" : "doc"}`}
-                                >
-                                  <span>{isVideo ? "▶" : "📄"}</span>
-                                  {res.label}
-                                </a>
+                                  isComingSoon ? (
+                                    <span
+                                      key={rIdx}
+                                      className={`mod-link ${isVideo ? "vid" : "doc"} disabled`}
+                                      aria-disabled="true"
+                                      onClick={(e) => e.preventDefault()}
+                                      style={{
+                                        opacity: 0.5,
+                                        cursor: "not-allowed",
+                                      }}
+                                    >
+                                      <span>{isVideo ? "▶" : "📄"}</span>
+                                      {res.label}
+                                    </span>
+                                  ) : (
+                                    <a
+                                      key={rIdx}
+                                      href={res.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className={`mod-link ${isVideo ? "vid" : "doc"}`}
+                                  >
+                                    <span>{isVideo ? "▶" : "📄"}</span>
+                                    {res.label}
+                                  </a>
+                                  )
                               ) : null
                               );
                             })}
@@ -831,9 +862,9 @@ export default function SyllabusPage() {
                               type="button"
                               onClick={(e) => handleToggleComplete(e, moduleUniqueKey)}
                               style={{
-                                background: isCompleted ? "rgba(16, 185, 129, 0.08)" : "transparent",
-                                color: isCompleted ? "#10b981" : "var(--text-muted, #888)", 
-                                border: isCompleted ? "1px solid #10b981" : "1px solid var(--border, #444)",
+                                background: isCompleted ? "rgba(74, 222, 128, 0.12)" : "transparent",
+                                color: isCompleted ? "#4ade80" : "var(--text-muted, #888)",
+                                border: isCompleted ? "1px solid rgba(74, 222, 128, 0.45)" : "1px solid var(--border, #444)",
                                 padding: "6px 16px",
                                 borderRadius: "20px", 
                                 fontSize: "0.85rem",
@@ -846,18 +877,18 @@ export default function SyllabusPage() {
                                 transition: "all 0.2s ease"
                               }}
                               onMouseEnter={(e) => {
-                                e.currentTarget.style.background = isCompleted 
-                                  ? "rgba(239, 68, 68, 0.08)" 
-                                  : "rgba(16, 185, 129, 0.15)";
+                                e.currentTarget.style.background = isCompleted
+                                  ? "rgba(239, 68, 68, 0.08)"
+                                  : "rgba(74, 222, 128, 0.18)";
                                 if (isCompleted) {
                                   e.currentTarget.style.color = "#ef4444"; 
                                   e.currentTarget.style.borderColor = "#ef4444";
                                 }
                               }}
                               onMouseLeave={(e) => {
-                                e.currentTarget.style.background = isCompleted ? "rgba(16, 185, 129, 0.08)" : "transparent";
-                                e.currentTarget.style.color = isCompleted ? "#10b981" : "var(--text-muted, #888)";
-                                e.currentTarget.style.borderColor = isCompleted ? "#10b981" : "1px solid var(--border, #444)";
+                                e.currentTarget.style.background = isCompleted ? "rgba(74, 222, 128, 0.12)" : "transparent";
+                                e.currentTarget.style.color = isCompleted ? "#4ade80" : "var(--text-muted, #888)";
+                                e.currentTarget.style.borderColor = isCompleted ? "rgba(74, 222, 128, 0.45)" : "1px solid var(--border, #444)";
                               }}
                             >
                               {isCompleted ? (
