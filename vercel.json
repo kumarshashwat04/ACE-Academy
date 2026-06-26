@@ -1,0 +1,9 @@
+{
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/ace_academy",
+      "permanent": true
+    }
+  ]
+}
