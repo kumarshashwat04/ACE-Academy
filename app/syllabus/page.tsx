@@ -860,15 +860,20 @@ export default function SyllabusPage() {
                           <div style={{ marginLeft: "auto", flexShrink: 0 }}>
                             <button
                               type="button"
-                              onClick={(e) => handleToggleComplete(e, moduleUniqueKey)}
+                              disabled={isComingSoon}
+                              onClick={(e) => {
+                                if (isComingSoon) return;
+                                handleToggleComplete(e, moduleUniqueKey);
+                              }}
                               style={{
                                 background: isCompleted ? "rgba(74, 222, 128, 0.12)" : "transparent",
                                 color: isCompleted ? "#4ade80" : "var(--text-muted, #888)",
                                 border: isCompleted ? "1px solid rgba(74, 222, 128, 0.45)" : "1px solid var(--border, #444)",
                                 padding: "6px 16px",
-                                borderRadius: "20px", 
+                                borderRadius: "20px",
                                 fontSize: "0.85rem",
-                                cursor: "pointer",
+                                cursor: isComingSoon ? "not-allowed" : "pointer",
+                                opacity: isComingSoon ? 0.5 : 1,
                                 fontWeight: 500,
                                 display: "flex",
                                 alignItems: "center",
@@ -877,15 +882,17 @@ export default function SyllabusPage() {
                                 transition: "all 0.2s ease"
                               }}
                               onMouseEnter={(e) => {
+                                if (isComingSoon) return;
                                 e.currentTarget.style.background = isCompleted
                                   ? "rgba(239, 68, 68, 0.08)"
                                   : "rgba(74, 222, 128, 0.18)";
                                 if (isCompleted) {
-                                  e.currentTarget.style.color = "#ef4444"; 
+                                  e.currentTarget.style.color = "#ef4444";
                                   e.currentTarget.style.borderColor = "#ef4444";
                                 }
                               }}
                               onMouseLeave={(e) => {
+                                if (isComingSoon) return;
                                 e.currentTarget.style.background = isCompleted ? "rgba(74, 222, 128, 0.12)" : "transparent";
                                 e.currentTarget.style.color = isCompleted ? "#4ade80" : "var(--text-muted, #888)";
                                 e.currentTarget.style.borderColor = isCompleted ? "rgba(74, 222, 128, 0.45)" : "1px solid var(--border, #444)";
