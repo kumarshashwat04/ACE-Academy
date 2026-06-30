@@ -824,35 +824,27 @@ export default function SyllabusPage() {
                           <div className="mod-links" style={{ margin: 0, display: "flex", gap: "8px", flexWrap: "wrap" }}>
                             {mod.resources && mod.resources.length > 0 && mod.resources.map((res, rIdx) => {
                               const isVideo = res.type.toLowerCase() === "video";
-                              return (
-                                !isVideo ? (
-                                  isComingSoon ? (
-                                    <span
-                                      key={rIdx}
-                                      className={`mod-link ${isVideo ? "vid" : "doc"} disabled`}
-                                      aria-disabled="true"
-                                      onClick={(e) => e.preventDefault()}
-                                      style={{
-                                        opacity: 0.5,
-                                        cursor: "not-allowed",
-                                      }}
-                                    >
-                                      <span>{isVideo ? "▶" : "📄"}</span>
-                                      {res.label}
-                                    </span>
-                                  ) : (
-                                    <a
-                                      key={rIdx}
-                                      href={res.url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className={`mod-link ${isVideo ? "vid" : "doc"}`}
-                                  >
-                                    <span>{isVideo ? "▶" : "📄"}</span>
-                                    {res.label}
-                                  </a>
-                                  )
-                              ) : null
+                              return isComingSoon ? (
+                                <span
+                                  key={rIdx}
+                                  className={`mod-link ${isVideo ? "vid" : "doc"} disabled`}
+                                  aria-disabled="true"
+                                  style={{ opacity: 0.5, cursor: "not-allowed" }}
+                                >
+                                  <span>{isVideo ? "▶" : "📄"}</span>
+                                  {res.label}
+                                </span>
+                              ) : (
+                                <a
+                                  key={rIdx}
+                                  href={res.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={`mod-link ${isVideo ? "vid" : "doc"}`}
+                                >
+                                  <span>{isVideo ? "▶" : "📄"}</span>
+                                  {res.label}
+                                </a>
                               );
                             })}
                           </div>

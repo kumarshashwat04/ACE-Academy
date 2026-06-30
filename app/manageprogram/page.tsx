@@ -139,6 +139,27 @@ export default function ManageProgram() {
   // Accordion Expand State for Syllabus
   const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({});
 
+  // Add Topic Modal State
+  const [isAddTopicModalOpen, setIsAddTopicModalOpen] = useState(false);
+  const [newTopicTitle, setNewTopicTitle] = useState('');
+
+  // Add Module Modal State
+  const [isAddModuleModalOpen, setIsAddModuleModalOpen] = useState(false);
+  const [addModTopicIdx, setAddModTopicIdx] = useState<number>(-1);
+  const [newModCode, setNewModCode] = useState('');
+  const [newModTitle, setNewModTitle] = useState('');
+  const [newModDesc, setNewModDesc] = useState('');
+
+  // Add Resource Modal State
+  const [isAddResModalOpen, setIsAddResModalOpen] = useState(false);
+  const [addResModCode, setAddResModCode] = useState('');
+
+  // Inline resource builder (used inside Add Module modal)
+  const [newModResources, setNewModResources] = useState<AdminModuleResource[]>([]);
+  const [newResLabel, setNewResLabel] = useState('');
+  const [newResUrl, setNewResUrl] = useState('');
+  const [newResType, setNewResType] = useState('doc');
+
   // --- USER MANAGEMENT STATE ---
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [usersLoading, setUsersLoading] = useState<boolean>(false);
@@ -617,6 +638,252 @@ export default function ManageProgram() {
 
   const toggleSyllabusCard = (key: string) => {
     setExpandedCards(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  // Shared helper: deep-clone syllabus data, find the active level, POST updated payload to Firebase
+  const saveSyllabusData = async (clonedData: AdminSyllabusPayload): Promise<boolean> => {
+    const finalRequestBody = {
+      product: {
+        id: admProd,
+        name: PRODUCTS.find(p => p.id === admProd)?.name || 'Tools & Techniques',
+        sub: clonedData.sub || 'Operational Toolkit',
+        icon: PRODUCTS.find(p => p.id === admProd)?.icon || '🛠️',
+        levels: clonedData.levels,
+      },
+    };
+    const response = await fetch(apiUrl('/api/firebase/syllabus'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(finalRequestBody),
+    });
+    const responseText = await response.text();
+    let responseData: any = {};
+    if (responseText) {
+      try { responseData = JSON.parse(responseText); } catch { responseData = { error: responseText }; }
+    }
+    if (!response.ok) {
+      throw new Error(responseData.error || responseData.message || `Server error ${response.status}`);
+    }
+    return true;
+  };
+
+  const getActiveLevel = (clonedData: AdminSyllabusPayload) => {
+    const targetLevelName = (CMETA[admLvl]?.name || '').toLowerCase().replace(/[\s-]+/g, '');
+    return clonedData.levels?.find(
+      (l: any) => l.name.toLowerCase().replace(/[\s-]+/g, '') === targetLevelName
+    );
+  };
+
+  // --- ADD TOPIC HANDLERS ---
+  const handleOpenAddTopic = () => {
+    setNewTopicTitle('');
+    setIsAddTopicModalOpen(true);
+  };
+
+  const handleSaveNewTopic = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTopicTitle.trim()) return showAlert('Topic title is required.', 'error');
+    if (!currentSyllabusData) return;
+
+    const clonedData: AdminSyllabusPayload = JSON.parse(JSON.stringify(currentSyllabusData));
+    const targetLevel = getActiveLevel(clonedData);
+    if (!targetLevel) return showAlert('Could not find target level.', 'error');
+
+    targetLevel.topics.push({ title: newTopicTitle.trim(), modules: [] });
+
+    setSylLoading(true);
+    try {
+      await saveSyllabusData(clonedData);
+      setCurrentSyllabusData(clonedData);
+      setIsAddTopicModalOpen(false);
+      showAlert('Topic added successfully!', 'success');
+    } catch (err: any) {
+      showAlert(`Failed to add topic: ${err.message}`, 'error');
+    } finally {
+      setSylLoading(false);
+    }
+  };
+
+  // --- ADD MODULE HANDLERS ---
+  const handleOpenAddModule = (topicIdx: number) => {
+    setAddModTopicIdx(topicIdx);
+    const existingCount = currentAdminLevelData?.topics[topicIdx]?.modules.length ?? 0;
+    setNewModCode(`${topicIdx + 1}.${existingCount + 1}`);
+    setNewModTitle('');
+    setNewModDesc('');
+    setNewModResources([]);
+    setNewResLabel('');
+    setNewResUrl('');
+    setNewResType('doc');
+    setIsAddModuleModalOpen(true);
+  };
+
+  const handleSaveNewModule = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newModCode.trim()) return showAlert('Module code is required.', 'error');
+    if (!newModTitle.trim()) return showAlert('Module title is required.', 'error');
+    if (!currentSyllabusData) return;
+
+    const clonedData: AdminSyllabusPayload = JSON.parse(JSON.stringify(currentSyllabusData));
+    const targetLevel = getActiveLevel(clonedData);
+    if (!targetLevel) return showAlert('Could not find target level.', 'error');
+    if (!targetLevel.topics[addModTopicIdx]) return showAlert('Invalid topic index.', 'error');
+
+    const newMod: AdminModule = {
+      code: newModCode.trim(),
+      title: newModTitle.trim(),
+      description: newModDesc.trim(),
+      resources: newModResources,
+    };
+    targetLevel.topics[addModTopicIdx].modules.push(newMod);
+
+    setSylLoading(true);
+    try {
+      await saveSyllabusData(clonedData);
+      setCurrentSyllabusData(clonedData);
+      setIsAddModuleModalOpen(false);
+      showAlert('Module added successfully!', 'success');
+    } catch (err: any) {
+      showAlert(`Failed to add module: ${err.message}`, 'error');
+    } finally {
+      setSylLoading(false);
+    }
+  };
+
+  // --- ADD RESOURCE HANDLERS ---
+  const handleOpenAddResource = (modCode: string) => {
+    setAddResModCode(modCode);
+    setModalLnkLabel('');
+    setModalLnkUrl('');
+    setModalLnkType('doc');
+    setIsAddResModalOpen(true);
+  };
+
+  const handleSaveNewResource = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!modalLnkLabel.trim()) return showAlert('Resource label is required.', 'error');
+    if (!modalLnkUrl.trim()) return showAlert('Resource URL is required.', 'error');
+    if (!currentSyllabusData) return;
+
+    const clonedData: AdminSyllabusPayload = JSON.parse(JSON.stringify(currentSyllabusData));
+    const targetLevel = getActiveLevel(clonedData);
+    if (!targetLevel) return showAlert('Could not find target level.', 'error');
+
+    let found = false;
+    for (const topic of targetLevel.topics) {
+      for (const mod of topic.modules) {
+        if (mod.code === addResModCode) {
+          if (!mod.resources) mod.resources = [];
+          mod.resources.push({ label: modalLnkLabel.trim(), type: modalLnkType, url: modalLnkUrl.trim() });
+          found = true;
+          break;
+        }
+      }
+      if (found) break;
+    }
+
+    if (!found) return showAlert('Module not found.', 'error');
+
+    setSylLoading(true);
+    try {
+      await saveSyllabusData(clonedData);
+      setCurrentSyllabusData(clonedData);
+      setIsAddResModalOpen(false);
+      showAlert('Resource added successfully!', 'success');
+    } catch (err: any) {
+      showAlert(`Failed to add resource: ${err.message}`, 'error');
+    } finally {
+      setSylLoading(false);
+    }
+  };
+
+  // --- DELETE SYLLABUS STRUCTURE HANDLERS ---
+  const handleDeleteTopic = (topicIdx: number) => {
+    const topicTitle = currentAdminLevelData?.topics[topicIdx]?.title || 'this topic';
+    setConfirmDialog({
+      isOpen: true,
+      message: `Delete topic "${topicTitle}" and all its modules? This cannot be undone.`,
+      onConfirm: async () => {
+        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+        if (!currentSyllabusData) return;
+        const clonedData: AdminSyllabusPayload = JSON.parse(JSON.stringify(currentSyllabusData));
+        const targetLevel = getActiveLevel(clonedData);
+        if (!targetLevel) return showAlert('Could not find target level.', 'error');
+        targetLevel.topics.splice(topicIdx, 1);
+        setSylLoading(true);
+        try {
+          await saveSyllabusData(clonedData);
+          setCurrentSyllabusData(clonedData);
+          showAlert('Topic deleted successfully!', 'success');
+        } catch (err: any) {
+          showAlert(`Failed to delete topic: ${err.message}`, 'error');
+        } finally {
+          setSylLoading(false);
+        }
+      },
+    });
+  };
+
+  const handleDeleteModule = (topicIdx: number, modIdx: number) => {
+    const modTitle = currentAdminLevelData?.topics[topicIdx]?.modules[modIdx]?.title || 'this module';
+    setConfirmDialog({
+      isOpen: true,
+      message: `Delete module "${modTitle}"? This cannot be undone.`,
+      onConfirm: async () => {
+        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+        if (!currentSyllabusData) return;
+        const clonedData: AdminSyllabusPayload = JSON.parse(JSON.stringify(currentSyllabusData));
+        const targetLevel = getActiveLevel(clonedData);
+        if (!targetLevel) return showAlert('Could not find target level.', 'error');
+        targetLevel.topics[topicIdx].modules.splice(modIdx, 1);
+        setSylLoading(true);
+        try {
+          await saveSyllabusData(clonedData);
+          setCurrentSyllabusData(clonedData);
+          showAlert('Module deleted successfully!', 'success');
+        } catch (err: any) {
+          showAlert(`Failed to delete module: ${err.message}`, 'error');
+        } finally {
+          setSylLoading(false);
+        }
+      },
+    });
+  };
+
+  const handleDeleteResource = (modCode: string, resIdx: number) => {
+    setConfirmDialog({
+      isOpen: true,
+      message: 'Delete this resource? This cannot be undone.',
+      onConfirm: async () => {
+        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+        if (!currentSyllabusData) return;
+        const clonedData: AdminSyllabusPayload = JSON.parse(JSON.stringify(currentSyllabusData));
+        const targetLevel = getActiveLevel(clonedData);
+        if (!targetLevel) return showAlert('Could not find target level.', 'error');
+        let found = false;
+        for (const topic of targetLevel.topics) {
+          for (const mod of topic.modules) {
+            if (mod.code === modCode) {
+              mod.resources = (mod.resources || []).filter((_: AdminModuleResource, i: number) => i !== resIdx);
+              found = true;
+              break;
+            }
+          }
+          if (found) break;
+        }
+        if (!found) return showAlert('Module not found.', 'error');
+        setSylLoading(true);
+        try {
+          await saveSyllabusData(clonedData);
+          setCurrentSyllabusData(clonedData);
+          showAlert('Resource deleted successfully!', 'success');
+        } catch (err: any) {
+          showAlert(`Failed to delete resource: ${err.message}`, 'error');
+        } finally {
+          setSylLoading(false);
+        }
+      },
+    });
   };
 
   // --- USER MANAGEMENT DATA + MUTATION HANDLERS ---
@@ -1110,8 +1377,25 @@ export default function ManageProgram() {
               <div id="adSylCards">
                 {currentAdminLevelData.topics.map((topic, tIdx) => (
                   <div key={tIdx} style={{ marginBottom: '28px' }}>
-                    <div className="sec-label" style={{ color: activeSylColors.text, fontWeight: '700', marginBottom: '12px' }}>
-                      <span>◆ </span>{topic.title}
+                    <div className="sec-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: activeSylColors.text, fontWeight: '700', marginBottom: '12px' }}>
+                      <span><span>◆ </span>{topic.title}</span>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenAddModule(tIdx)}
+                          style={{ background: activeSylColors.bg, border: `1px solid ${activeSylColors.border}`, color: activeSylColors.text, cursor: 'pointer', fontSize: '12px', padding: '4px 12px', borderRadius: '4px', fontWeight: 600 }}
+                        >
+                          + Add Module
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteTopic(tIdx)}
+                          style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.35)', color: '#f87171', cursor: 'pointer', fontSize: '12px', padding: '4px 10px', borderRadius: '4px', fontWeight: 600 }}
+                          title="Delete topic"
+                        >
+                          🗑
+                        </button>
+                      </div>
                     </div>
 
                     <div className="mod-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(1fr, 1fr))', gap: '16px' }}>
@@ -1130,16 +1414,30 @@ export default function ManageProgram() {
                               overflow: 'hidden'
                             }}
                           >
-                            <div 
-                              className="mod-head" 
-                              onClick={() => toggleSyllabusCard(moduleUniqueKey)} 
-                              style={{ display: 'flex', alignItems: 'center', padding: '14px', cursor: 'pointer' }}
+                            <div
+                              className="mod-head"
+                              style={{ display: 'flex', alignItems: 'center', padding: '14px' }}
                             >
-                              <span className="mod-code" style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', marginRight: '10px', background: activeSylColors.bg, color: activeSylColors.text, padding: '3px 6px', borderRadius: '4px', border: `1px solid rgba(${activeSylColors.rawGlow}, 0.3)` }}>
-                                {mod.code || "0.0.0"}
-                              </span>
-                              <span style={{ fontSize: '14px', fontWeight: 600, flex: 1, color: 'var(--text1)' }}>{mod.title}</span>
-                              <span className="mod-chev" style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▼</span>
+                              <div
+                                onClick={() => toggleSyllabusCard(moduleUniqueKey)}
+                                style={{ display: 'flex', alignItems: 'center', flex: 1, cursor: 'pointer', minWidth: 0 }}
+                              >
+                                <span className="mod-code" style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', marginRight: '10px', flexShrink: 0, background: activeSylColors.bg, color: activeSylColors.text, padding: '3px 6px', borderRadius: '4px', border: `1px solid rgba(${activeSylColors.rawGlow}, 0.3)` }}>
+                                  {mod.code || "0.0.0"}
+                                </span>
+                                <span style={{ fontSize: '14px', fontWeight: 600, flex: 1, color: 'var(--text1)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{mod.title}</span>
+                                <span className="mod-chev" style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', marginRight: '10px' }}>▼</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); handleDeleteModule(tIdx, mIdx); }}
+                                style={{ background: 'transparent', border: 'none', color: 'rgba(239,68,68,0.5)', cursor: 'pointer', fontSize: '14px', padding: '2px 4px', flexShrink: 0, transition: 'color 0.2s' }}
+                                onMouseEnter={(e) => e.currentTarget.style.color = '#f87171'}
+                                onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(239,68,68,0.5)'}
+                                title="Delete module"
+                              >
+                                🗑
+                              </button>
                             </div>
                             
                             {isExpanded && (
@@ -1163,15 +1461,24 @@ export default function ManageProgram() {
                                   <p style={{ margin: 0, fontSize: '13px', color: 'var(--text2)', lineHeight: '1.5' }}>{mod.description}</p>
                                 </div>
 
-                                {mod.resources && mod.resources.length > 0 && (
-                                  <div>
-                                    <div style={{ fontSize: '11px', color: 'var(--text3)', fontWeight: 600, marginBottom: '6px', textTransform: 'uppercase' }}>Attached Resource Materials:</div>
+                                <div>
+                                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                                    <div style={{ fontSize: '11px', color: 'var(--text3)', fontWeight: 600, textTransform: 'uppercase' }}>Attached Resource Materials:</div>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => { e.stopPropagation(); handleOpenAddResource(mod.code); }}
+                                      style={{ background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.35)', color: 'var(--purple-l)', cursor: 'pointer', fontSize: '11px', padding: '3px 10px', borderRadius: '4px', fontWeight: 600 }}
+                                    >
+                                      + Add Resource
+                                    </button>
+                                  </div>
+                                  {mod.resources && mod.resources.length > 0 ? (
                                     <div className="mod-links" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                                       {mod.resources.map((res, rIdx) => {
                                         const isVideo = res.type.toLowerCase() === 'video';
                                         return (
-                                          <div 
-                                            key={rIdx} 
+                                          <div
+                                            key={rIdx}
                                             className={`mod-link ${isVideo ? 'vid' : 'doc'}`}
                                             style={{ fontSize: '12px', padding: '4px 10px', borderRadius: '4px', background: 'rgba(255,255,255,0.04)', display: 'inline-flex', alignItems: 'center', gap: '8px', border: '1px solid rgba(255,255,255,0.05)' }}
                                           >
@@ -1179,26 +1486,34 @@ export default function ManageProgram() {
                                               <span>{isVideo ? '▶' : '📄'}</span>
                                               {res.label}
                                             </a>
-                                            
                                             <button
                                               type="button"
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleOpenEditLink(mod.code, rIdx, res);
-                                              }}
+                                              onClick={(e) => { e.stopPropagation(); handleOpenEditLink(mod.code, rIdx, res); }}
                                               style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.35)', cursor: 'pointer', padding: '2px 4px', fontSize: '11px', display: 'flex', alignItems: 'center', transition: 'color 0.2s' }}
                                               onMouseEnter={(e) => e.currentTarget.style.color = 'var(--purple-l)'}
                                               onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.35)'}
-                                              title="Modify link metadata"
+                                              title="Edit resource"
                                             >
                                               ✏️
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={(e) => { e.stopPropagation(); handleDeleteResource(mod.code, rIdx); }}
+                                              style={{ background: 'transparent', border: 'none', color: 'rgba(239,68,68,0.45)', cursor: 'pointer', padding: '2px 4px', fontSize: '12px', display: 'flex', alignItems: 'center', transition: 'color 0.2s' }}
+                                              onMouseEnter={(e) => e.currentTarget.style.color = '#f87171'}
+                                              onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(239,68,68,0.45)'}
+                                              title="Delete resource"
+                                            >
+                                              🗑
                                             </button>
                                           </div>
                                         );
                                       })}
                                     </div>
-                                  </div>
-                                )}
+                                  ) : (
+                                    <div style={{ fontSize: '12px', color: 'var(--text3)', fontStyle: 'italic' }}>No resources attached yet.</div>
+                                  )}
+                                </div>
                               </div>
                             )}
                           </div>
@@ -1207,11 +1522,25 @@ export default function ManageProgram() {
                     </div>
                   </div>
                 ))}
+                <button
+                  type="button"
+                  onClick={handleOpenAddTopic}
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'transparent', border: `1px dashed ${activeSylColors.border}`, color: activeSylColors.text, cursor: 'pointer', fontSize: '13px', padding: '10px 20px', borderRadius: '6px', fontWeight: 600, marginTop: '8px', opacity: 0.8 }}
+                >
+                  + Add New Topic
+                </button>
               </div>
             ) : (
               <div className="empty">
                 <div className="empty-ico">📂</div>
                 <p>No content parameters mapped inside this structural index database query target.</p>
+                <button
+                  type="button"
+                  onClick={handleOpenAddTopic}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'transparent', border: `1px dashed ${activeSylColors.border}`, color: activeSylColors.text, cursor: 'pointer', fontSize: '13px', padding: '10px 20px', borderRadius: '6px', fontWeight: 600, marginTop: '16px' }}
+                >
+                  + Add First Topic
+                </button>
               </div>
             )}
           </div>
@@ -1402,8 +1731,8 @@ export default function ManageProgram() {
                     onChange={(e) => setModalLnkType(e.target.value)}
                     style={{ background: 'rgba(0,0,0,0.3)', color: '#fff', border: '1px solid var(--border)', padding: '6px 10px', borderRadius: '4px', width: '100%' }}
                   >
-                    <option value="doc">📄 Documentation Reference (Confluence / Web PDF)</option>
-                    <option value="video">▶ Recorded Session / Stream Media Video asset</option>
+                    <option value="doc">📄 Confluence Doc</option>
+                    <option value="video">▶ Video</option>
                   </select>
                 </div>
 
@@ -1445,6 +1774,234 @@ export default function ManageProgram() {
                   <button type="button" className="btn-edit" onClick={() => setIsDescModalOpen(false)}>Cancel</button>
                   <button type="submit" className="btn-add" style={{ backgroundColor: activeSylColors.border, borderColor: activeSylColors.border, color: '#fff', boxShadow: 'none' }}>
                     {sylLoading ? 'Updating Sandbox...' : 'Save Description Text'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* ──────────────── ADD RESOURCE MODAL ──────────────── */}
+        {isAddResModalOpen && (
+          <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1004 }}>
+            <div className="modal-content" style={{ background: 'var(--surface)', padding: '24px', borderRadius: '8px', width: '480px', border: `1px solid ${activeSylColors.border}`, boxShadow: '0 0 24px rgba(0,0,0,0.5)' }}>
+              <h3 style={{ margin: '0 0 4px 0', fontSize: '18px', color: activeSylColors.text }}>Add Resource</h3>
+              <div style={{ fontSize: '12px', color: 'var(--text3)', marginBottom: '16px', fontFamily: 'monospace' }}>
+                Module: {addResModCode}
+              </div>
+              <form onSubmit={handleSaveNewResource}>
+                <div style={{ marginBottom: '14px' }}>
+                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '12px', color: 'var(--text2)' }}>Label</label>
+                  <input
+                    type="text"
+                    className="inp"
+                    style={{ width: '100%' }}
+                    value={modalLnkLabel}
+                    onChange={(e) => setModalLnkLabel(e.target.value)}
+                    placeholder="e.g. Training Doc"
+                    autoFocus
+                  />
+                </div>
+                <div style={{ marginBottom: '14px' }}>
+                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '12px', color: 'var(--text2)' }}>URL</label>
+                  <input
+                    type="text"
+                    className="inp"
+                    style={{ width: '100%', fontFamily: 'monospace', fontSize: '12px' }}
+                    value={modalLnkUrl}
+                    onChange={(e) => setModalLnkUrl(e.target.value)}
+                    placeholder="https://..."
+                  />
+                </div>
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '12px', color: 'var(--text2)' }}>Type</label>
+                  <select
+                    value={modalLnkType}
+                    onChange={(e) => setModalLnkType(e.target.value)}
+                    style={{ background: 'rgba(0,0,0,0.3)', color: '#fff', border: '1px solid var(--border)', padding: '8px 10px', borderRadius: '4px', width: '100%' }}
+                  >
+                    <option value="doc">📄 Confluence Doc</option>
+                    <option value="video">▶ Video</option>
+                  </select>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                  <button type="button" className="btn-edit" onClick={() => setIsAddResModalOpen(false)}>Cancel</button>
+                  <button type="submit" className="btn-add" disabled={sylLoading} style={{ backgroundColor: activeSylColors.border, borderColor: activeSylColors.border, color: '#fff', boxShadow: 'none', opacity: sylLoading ? 0.6 : 1 }}>
+                    {sylLoading ? 'Saving...' : 'Add Resource'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* ──────────────── ADD TOPIC MODAL ──────────────── */}
+        {isAddTopicModalOpen && (
+          <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1003 }}>
+            <div className="modal-content" style={{ background: 'var(--surface)', padding: '24px', borderRadius: '8px', width: '460px', border: `1px solid ${activeSylColors.border}`, boxShadow: '0 0 24px rgba(0,0,0,0.5)' }}>
+              <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', color: activeSylColors.text }}>Add New Topic</h3>
+              <form onSubmit={handleSaveNewTopic}>
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '12px', color: 'var(--text2)' }}>Topic Title</label>
+                  <input
+                    type="text"
+                    className="inp"
+                    style={{ width: '100%' }}
+                    value={newTopicTitle}
+                    onChange={(e) => setNewTopicTitle(e.target.value)}
+                    placeholder="e.g. Platform & Infrastructure"
+                    autoFocus
+                  />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                  <button type="button" className="btn-edit" onClick={() => setIsAddTopicModalOpen(false)}>Cancel</button>
+                  <button type="submit" className="btn-add" disabled={sylLoading} style={{ backgroundColor: activeSylColors.border, borderColor: activeSylColors.border, color: '#fff', boxShadow: 'none', opacity: sylLoading ? 0.6 : 1 }}>
+                    {sylLoading ? 'Saving...' : 'Add Topic'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* ──────────────── ADD MODULE MODAL ──────────────── */}
+        {isAddModuleModalOpen && (
+          <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1003 }}>
+            <div className="modal-content" style={{ background: 'var(--surface)', padding: '24px', borderRadius: '8px', width: '560px', maxHeight: '90vh', overflowY: 'auto', border: `1px solid ${activeSylColors.border}`, boxShadow: '0 0 24px rgba(0,0,0,0.5)' }}>
+              <h3 style={{ margin: '0 0 4px 0', fontSize: '18px', color: activeSylColors.text }}>Add New Module</h3>
+              <div style={{ fontSize: '12px', color: 'var(--text3)', marginBottom: '16px' }}>
+                Topic: <span style={{ color: activeSylColors.text, fontWeight: 600 }}>{currentAdminLevelData?.topics[addModTopicIdx]?.title}</span>
+              </div>
+              <form onSubmit={handleSaveNewModule}>
+                {/* Code + Title */}
+                <div style={{ display: 'flex', gap: '12px', marginBottom: '14px' }}>
+                  <div style={{ width: '120px', flexShrink: 0 }}>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '12px', color: 'var(--text2)' }}>Module Code</label>
+                    <input
+                      type="text"
+                      className="inp"
+                      style={{ width: '100%', fontFamily: 'monospace', fontSize: '12px' }}
+                      value={newModCode}
+                      onChange={(e) => setNewModCode(e.target.value)}
+                      placeholder="1.1.1"
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '12px', color: 'var(--text2)' }}>Module Title</label>
+                    <input
+                      type="text"
+                      className="inp"
+                      style={{ width: '100%' }}
+                      value={newModTitle}
+                      onChange={(e) => setNewModTitle(e.target.value)}
+                      placeholder="e.g. Basic Architecture"
+                      autoFocus
+                    />
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '12px', color: 'var(--text2)' }}>Description <span style={{ color: 'var(--text3)' }}>(optional)</span></label>
+                  <textarea
+                    className="syl-textarea"
+                    rows={2}
+                    value={newModDesc}
+                    onChange={(e) => setNewModDesc(e.target.value)}
+                    placeholder="Brief description of module content..."
+                    style={{ width: '100%', background: 'rgba(0,0,0,0.2)', color: '#fff', border: '1px solid var(--border)', padding: '10px', borderRadius: '4px', fontSize: '13px', lineHeight: '1.5' }}
+                  />
+                </div>
+
+                {/* Inline Resource Builder */}
+                <div style={{ borderTop: '1px solid var(--border)', paddingTop: '16px', marginBottom: '20px' }}>
+                  <div style={{ fontSize: '12px', color: 'var(--text2)', fontWeight: 600, marginBottom: '10px', textTransform: 'uppercase' }}>
+                    Resources <span style={{ color: 'var(--text3)', fontWeight: 400, textTransform: 'none' }}>(optional)</span>
+                  </div>
+
+                  {/* Added resources list */}
+                  {newModResources.length > 0 && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '12px' }}>
+                      {newModResources.map((r, i) => (
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '4px', padding: '6px 10px' }}>
+                          <a
+                            href={r.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, color: r.type === 'video' ? '#f43f5e' : '#38bdf8', textDecoration: 'none', fontSize: '13px', overflow: 'hidden' }}
+                          >
+                            <span style={{ flexShrink: 0 }}>{r.type === 'video' ? '▶' : '📄'}</span>
+                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.label}</span>
+                          </a>
+                          <span style={{ fontSize: '11px', color: 'var(--text3)', flexShrink: 0 }}>{r.type === 'video' ? 'Video' : 'Confluence Doc'}</span>
+                          <button
+                            type="button"
+                            onClick={() => setNewModResources(prev => prev.filter((_, idx) => idx !== i))}
+                            style={{ background: 'transparent', border: 'none', color: '#f87171', cursor: 'pointer', fontSize: '14px', lineHeight: 1, padding: '0 2px', flexShrink: 0 }}
+                            title="Remove"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Add row */}
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '11px', color: 'var(--text3)' }}>Label</label>
+                      <input
+                        type="text"
+                        className="inp"
+                        style={{ width: '100%', fontSize: '12px' }}
+                        value={newResLabel}
+                        onChange={(e) => setNewResLabel(e.target.value)}
+                        placeholder="e.g. Training Doc"
+                      />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '11px', color: 'var(--text3)' }}>URL</label>
+                      <input
+                        type="text"
+                        className="inp"
+                        style={{ width: '100%', fontSize: '12px', fontFamily: 'monospace' }}
+                        value={newResUrl}
+                        onChange={(e) => setNewResUrl(e.target.value)}
+                        placeholder="https://..."
+                      />
+                    </div>
+                    <div style={{ width: '140px', flexShrink: 0 }}>
+                      <label style={{ display: 'block', marginBottom: '4px', fontSize: '11px', color: 'var(--text3)' }}>Type</label>
+                      <select
+                        value={newResType}
+                        onChange={(e) => setNewResType(e.target.value)}
+                        style={{ background: 'rgba(0,0,0,0.3)', color: '#fff', border: '1px solid var(--border)', padding: '7px 8px', borderRadius: '4px', width: '100%', fontSize: '12px' }}
+                      >
+                        <option value="doc">📄 Confluence Doc</option>
+                        <option value="video">▶ Video</option>
+                      </select>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!newResLabel.trim() || !newResUrl.trim()) return showAlert('Label and URL are required to add a resource.', 'error');
+                        setNewModResources(prev => [...prev, { label: newResLabel.trim(), url: newResUrl.trim(), type: newResType }]);
+                        setNewResLabel('');
+                        setNewResUrl('');
+                        setNewResType('doc');
+                      }}
+                      style={{ background: activeSylColors.bg, border: `1px solid ${activeSylColors.border}`, color: activeSylColors.text, cursor: 'pointer', padding: '7px 14px', borderRadius: '4px', fontWeight: 600, fontSize: '12px', flexShrink: 0, whiteSpace: 'nowrap' }}
+                    >
+                      + Add
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                  <button type="button" className="btn-edit" onClick={() => setIsAddModuleModalOpen(false)}>Cancel</button>
+                  <button type="submit" className="btn-add" disabled={sylLoading} style={{ backgroundColor: activeSylColors.border, borderColor: activeSylColors.border, color: '#fff', boxShadow: 'none', opacity: sylLoading ? 0.6 : 1 }}>
+                    {sylLoading ? 'Saving...' : 'Add Module'}
                   </button>
                 </div>
               </form>
