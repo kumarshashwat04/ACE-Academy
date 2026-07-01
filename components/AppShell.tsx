@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-
+import logo from "../public/assets/img/GO_LOGO.jpg"
 // 1. Bring in your session loader function (or import it if it's in another file)
 function loadSavedSession() {
   try {
@@ -85,10 +85,7 @@ export default function AppShell({ children, currentTab }: AppShellProps) {
       <div className="topbar">
         <div className="tb-left">
           <div className="tb-logo">
-            <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect width="26" height="26" rx="5" fill="#FF6B00"/>
-              <text x="13" y="18" textAnchor="middle" fontFamily="Arial,sans-serif" fontWeight="bold" fontSize="11" fill="white">GO</text>
-            </svg>
+            <img src={logo.src} alt="GreyOrange Logo" width="26" height="26" style={{borderRadius: '5px'}} />
             <span className="tb-brand">ACE Academy</span>
           </div>
           <div className="tb-divider"></div>
