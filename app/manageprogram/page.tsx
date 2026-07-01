@@ -165,6 +165,8 @@ export default function ManageProgram() {
   const [usersLoading, setUsersLoading] = useState<boolean>(false);
   const [usersError, setUsersError] = useState<string | null>(null);
   const [sessionUid, setSessionUid] = useState<string | null>(null);
+  const [userSearch, setUserSearch] = useState('');
+  const [userTeamFilter, setUserTeamFilter] = useState('');
 
   // User add/edit modal control
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
@@ -986,6 +988,34 @@ export default function ManageProgram() {
     }
   };
 
+  const filteredUsers = users.filter(u => {
+    const q = userSearch.toLowerCase();
+    const matchesSearch = !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+    const matchesTeam = !userTeamFilter || u.team === userTeamFilter;
+    return matchesSearch && matchesTeam;
+  });
+
+  const handleExportCsv = () => {
+    const headers = ['Name', 'Email', 'Team', 'Role', 'Certifications Earned'];
+    const rows = filteredUsers.map(u => [
+      u.name,
+      u.email,
+      u.team,
+      u.role,
+      getCertificationsEarnedCount(u.certifications),
+    ]);
+    const csv = [headers, ...rows]
+      .map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'ace_users.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const handleDeleteUser = (user: ManagedUser) => {
     if (user.uid === sessionUid) return;
     setConfirmDialog({
@@ -1571,9 +1601,68 @@ export default function ManageProgram() {
                   ))}
                 </div>
 
+                {/* Search / Filter / Export toolbar */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', marginBottom: '20px' }}>
+                  <input
+                    type="text"
+                    value={userSearch}
+                    onChange={(e) => setUserSearch(e.target.value)}
+                    placeholder="🔍 Search by name or email..."
+                    style={{
+                      flex: '1 1 240px',
+                      minWidth: '200px',
+                      padding: '10px 14px',
+                      fontSize: '14px',
+                      color: 'var(--text1)',
+                      background: 'var(--surface)',
+                      border: '1px solid var(--border)',
+                      borderRadius: '8px',
+                      outline: 'none',
+                    }}
+                  />
+                  <select
+                    value={userTeamFilter}
+                    onChange={(e) => setUserTeamFilter(e.target.value)}
+                    style={{
+                      padding: '10px 14px',
+                      fontSize: '14px',
+                      color: 'var(--text1)',
+                      background: 'var(--surface)',
+                      border: '1px solid var(--border)',
+                      borderRadius: '8px',
+                      outline: 'none',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <option value="">All Teams</option>
+                    {TEAM_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                  <button
+                    className="btn-add"
+                    onClick={handleExportCsv}
+                    disabled={filteredUsers.length === 0}
+                    style={{
+                      backgroundColor: 'var(--purple)',
+                      borderColor: 'var(--purple)',
+                      color: '#fff',
+                      opacity: filteredUsers.length === 0 ? 0.5 : 1,
+                      cursor: filteredUsers.length === 0 ? 'not-allowed' : 'pointer',
+                      marginLeft: 'auto',
+                    }}
+                  >
+                    ⬇ Export CSV
+                  </button>
+                </div>
+
+                {filteredUsers.length === 0 && !usersLoading && (
+                  <div style={{ textAlign: 'center', padding: '32px', color: 'var(--text3)' }}>
+                    {users.length === 0 ? 'No users found.' : 'No users match your search or filters.'}
+                  </div>
+                )}
+
                 {/* User Cards Grid */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(330px, 1fr))', gap: '16px' }}>
-                  {users.map(user => {
+                  {filteredUsers.map(user => {
                     const isSelf = user.uid === sessionUid;
                     const isAdmin = user.role === 'admin';
                     const earned = getCertificationsEarnedCount(user.certifications);
