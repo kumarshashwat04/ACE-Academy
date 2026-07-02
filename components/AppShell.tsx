@@ -191,6 +191,8 @@ function normalizeUser(savedUser: { name?: string; team?: string; role?: string;
 
 let cachedUser: UserType | null = null;
 
+const ADMIN_ONLY_TABS = ["manageprogram", "scores"];
+
 export default function AppShell({ children, currentTab }: AppShellProps) {
   const router = useRouter();
   const pathname = usePathname(); // Get the current URL path
@@ -199,9 +201,14 @@ export default function AppShell({ children, currentTab }: AppShellProps) {
 
   useEffect(() => {
     const savedUser = loadSavedSession();
-    
+
     if (savedUser) {
       const normalized = normalizeUser(savedUser);
+      if (ADMIN_ONLY_TABS.includes(currentTab) && normalized.role !== "admin") {
+        cachedUser = normalized;
+        router.push("/");
+        return;
+      }
       cachedUser = normalized;
       setUser(normalized);
       setIsCheckingAuth(false);
@@ -214,12 +221,17 @@ export default function AppShell({ children, currentTab }: AppShellProps) {
         setIsCheckingAuth(false);
       }
     }
-  }, [router, pathname]);
+  }, [router, pathname, currentTab]);
 
-  // CRITICAL: If we have no user, and we are redirecting away from a sub-page, 
+  // CRITICAL: If we have no user, and we are redirecting away from a sub-page,
   // do NOT render the layout or children. This stops the page flash completely.
   if (isCheckingAuth && pathname !== "/") {
     return null; // Or a loading spinner: <div className="loading">Loading...</div>
+  }
+
+  // Block rendering for non-admins on admin-only tabs while the redirect above takes effect.
+  if (ADMIN_ONLY_TABS.includes(currentTab) && user?.role !== "admin") {
+    return null;
   }
 
   const hrefFor = (tabName: string) => (tabName === "dash" ? "/" : `/${tabName}`);
